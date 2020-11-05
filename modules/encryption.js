@@ -55,7 +55,7 @@ const verifyPassword = (password, comparePassword, salt, keyLength = 64, options
  */
 const issueToken = (email, username, usertype = 'customer', academyCode = '', issuer, expiresIn = '10m', options = {}) => {
     const token = jwt.sign(
-        { email: encryptTokenUserData(email), username: username, usertype: usertype, academyCode: academyCode },
+        { authId: encryptTokenUserData(email), userName: username, userType: usertype, academyCode: academyCode },
         jwtSecret,
         {
             expiresIn: expiresIn,
@@ -64,7 +64,7 @@ const issueToken = (email, username, usertype = 'customer', academyCode = '', is
         },
     );
     const verified = jwt.verify(token, jwtSecret);
-    delete verified.email;
+    delete verified.authId;
     return { auth: verified, token: token };
 };
 
@@ -75,7 +75,7 @@ const issueToken = (email, username, usertype = 'customer', academyCode = '', is
 const verifyToken = (tokenValue) => {
     try {
         const verified = jwt.verify(tokenValue, jwtSecret);
-        verified.email = decrpytTokenUserData(verified.email);
+        verified.authId = decrpytTokenUserData(verified.authId);
         return verified;
     } catch (error) {
         error.code = error.name;

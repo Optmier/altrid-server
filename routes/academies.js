@@ -4,7 +4,7 @@ var router = express.Router();
 
 /** 모든 계약 학원 조회 */
 router.get('/', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'admin')
+    if (req.verified.userType !== 'admin')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let sql = `SELECT * FROM academies WHERE 1`;
@@ -27,9 +27,9 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
 /** 특정 계약 학원 조회 */
 router.get('/:code', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'teachers' && req.verified.usertype !== 'admins')
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
-    if (req.verified.usertype === 'teachers' && req.params.code !== 'current' && req.params.code !== req.verified.academyCode)
+    if (req.verified.userType === 'teachers' && req.params.code !== 'current' && req.params.code !== req.verified.academyCode)
         return res.status(403).json({ code: 'not-allowed-user', message: 'unauthorized-access :: not allowed user.' });
 
     let sql = `SELECT * FROM academies WHERE code='${req.params.code === 'current' ? req.verified.academyCode : req.params.code}'`;
@@ -44,9 +44,9 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
 
 /** 특정 계약 학원 이름만 조회 */
 router.get('/:code/name', useAuthCheck, (req, res, next) => {
-    // if (req.verified.usertype !== 'teachers' && req.verified.usertype !== 'admins')
+    // if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
     //     return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
-    if (req.verified.usertype === 'teachers' && req.params.code !== 'current' && req.params.code !== req.verified.academyCode)
+    if (req.verified.userType === 'teachers' && req.params.code !== 'current' && req.params.code !== req.verified.academyCode)
         return res.status(403).json({ code: 'not-allowed-user', message: 'unauthorized-access :: not allowed user.' });
 
     let sql = `SELECT name FROM academies WHERE code='${req.params.code === 'current' ? req.verified.academyCode : req.params.code}'`;
@@ -72,8 +72,8 @@ router.get('/exists/:code', (req, res, next) => {
 });
 
 /** 계약 학원 추가 */
-router.post('/', (req, res, next) => {
-    if (req.verified.usertype !== 'admin')
+router.post('/', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'admin')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     const { code, name, address, email, phone, numOfStudents } = req.body;
@@ -89,12 +89,12 @@ router.post('/', (req, res, next) => {
 
 /** 계약 학원 정보 변경 (계약 학생 수 변경 시 별도 문의) */
 router.patch('/:code', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'teachers' || req.verified.usertype !== 'admins')
+    if (req.verified.userType !== 'teachers' || req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     const { name, address, email, phone, numOfStudents } = req.body;
     let sql = `UPDATE academies SET name='${name}', address='${address}', email='${email}', phone='${phone}', num_of_students=${numOfStudents} WHERE code='${req.params.code}'`;
-    if (req.verified.usertype === 'teachers')
+    if (req.verified.userType === 'teachers')
         sql = `UPDATE academies SET name='${name}', address='${address}', email='${email}', phone='${phone}' WHERE code='${req.params.code}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -107,7 +107,7 @@ router.patch('/:code', useAuthCheck, (req, res, next) => {
 
 /** 계약 학원 삭제 */
 router.delete('/:code', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'admin')
+    if (req.verified.userType !== 'admin')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let sql = `DELETE FROM academies WHERE code='${req.params.code}'`;

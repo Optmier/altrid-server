@@ -4,19 +4,16 @@ var router = express.Router();
 const { issueToken } = require('../modules/encryption');
 const useAuthCheck = require('./middlewares/authCheck');
 
-const tasksAuthLoginCheckDatabase = (res, email, authId, usertype) =>
+const tasksAuthLoginCheckDatabase = (res, authId, email, userType) =>
     new Promise((resolve, reject) => {
         dbctrl((connection) => {
-            let sql = `SELECT COUNT(*) AS is_exists, approved, name FROM ${usertype} WHERE `;
-            if (usertype === 'students' || usertype === 'teachers')
-                sql = `SELECT COUNT(*) AS is_exists, academy_code, approved, name FROM ${usertype} WHERE `;
-            let _email = '';
-            if (email) {
-                sql += `email='${email}'`;
-                _email = email;
-            } else if (authId) {
+            let sql = `SELECT COUNT(*) AS is_exists, approved, name FROM ${userType} WHERE `;
+            if (userType === 'students' || userType === 'teachers')
+                sql = `SELECT COUNT(*) AS is_exists, academy_code, approved, name FROM ${userType} WHERE `;
+            if (authId) {
                 sql += `auth_id='${authId}'`;
-                _email = authId;
+            } else if (email) {
+                sql += `email='${email}'`;
             } else {
                 reject({
                     code: 'no-auth-info',
@@ -30,10 +27,10 @@ const tasksAuthLoginCheckDatabase = (res, email, authId, usertype) =>
                 } else {
                     if (results[0].is_exists > 0 && results[0].approved) {
                         resolve({
-                            email: _email,
+                            authId: email || authId,
                             name: results[0].name,
-                            usertype: usertype,
-                            academyCode: usertype === 'admins' ? '' : results[0].academy_code,
+                            userType: userType,
+                            academyCode: userType === 'admins' ? '' : results[0].academy_code,
                             res: res,
                         });
                     } else if (results[0].is_exists < 1) {
@@ -47,9 +44,9 @@ const tasksAuthLoginCheckDatabase = (res, email, authId, usertype) =>
     });
 
 const tasksAuthLoginAfterCheck = (data) => {
-    const { email, name, usertype, academyCode, res } = data;
-    if (usertype) {
-        const { auth, token } = issueToken(email + '', name, usertype, academyCode, 'altrid.optmier.com', '24h');
+    const { authId, name, userType, academyCode, res } = data;
+    if (userType) {
+        const { auth, token } = issueToken(authId + '', name, userType, academyCode, 'altrid.optmier.com', '24h');
         /** 클라이언트로 sid 토큰값 쿠키 저장 및 json으로 인증정보 전송*/
         setCookie(res, 'sid', token);
         res.status(201).json({
@@ -75,7 +72,7 @@ router.post('/admins', (req, res, next) => {
         });
     }
 
-    tasksAuthLoginCheckDatabase(res, email, authId, 'admins').then(tasksAuthLoginAfterCheck).catch(tasksAuthLoginFailed);
+    tasksAuthLoginCheckDatabase(res, null, email, 'admins').then(tasksAuthLoginAfterCheck).catch(tasksAuthLoginFailed);
 });
 
 /** 선생님 로그인 */
@@ -90,7 +87,7 @@ router.post('/teachers', (req, res, next) => {
         });
     }
 
-    tasksAuthLoginCheckDatabase(res, email, authId, 'teachers').then(tasksAuthLoginAfterCheck).catch(tasksAuthLoginFailed);
+    tasksAuthLoginCheckDatabase(res, authId, null, 'teachers').then(tasksAuthLoginAfterCheck).catch(tasksAuthLoginFailed);
 });
 
 /** 학생 로그인 */
@@ -105,7 +102,7 @@ router.post('/students', (req, res, next) => {
         });
     }
 
-    tasksAuthLoginCheckDatabase(res, email, authId, 'students').then(tasksAuthLoginAfterCheck).catch(tasksAuthLoginFailed);
+    tasksAuthLoginCheckDatabase(res, authId, null, 'students').then(tasksAuthLoginAfterCheck).catch(tasksAuthLoginFailed);
 });
 
 /** 민감한 정보 접근을 위한 임시 토큰 발급 */
@@ -120,7 +117,7 @@ router.post('/temp', (req, res, next) => {
         });
     }
 
-    const { auth, token } = issueToken(email || authId, '', 'temp', '', 'altrid.optmier.com', '30m');
+    const { auth, token } = issueToken(authId, '', 'temp', '', 'altrid.optmier.com', '30m');
     /** 클라이언트로 sid 토큰값 쿠키 저장 및 json으로 인증정보 전송*/
     setCookie(res, 'tmp', token);
     res.status(201).json({
@@ -138,7 +135,8 @@ router.delete('/temp', (req, res, next) => {
 
 /* 인증 토큰 유효 여부 확인 */
 router.get('/', useAuthCheck, (req, res, next) => {
-    delete req.verified.email;
+    console.log(req.verified);
+    delete req.verified.authId;
     res.json(req.verified);
 });
 

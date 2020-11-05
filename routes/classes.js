@@ -16,12 +16,12 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
             classes.updated
         FROM classes AS classes
         JOIN teachers AS teachers
-        ON classes.teacher_id=teachers.email OR classes.teacher_id=teachers.auth_id
+        ON classes.teacher_id=teachers.auth_id
         WHERE classes.academy_code='${academyCode}'
         ORDER BY classes.updated desc`;
     if (req.params.code === 'current') {
-        const userType = req.verified.usertype;
-        const id = req.verified.email;
+        const userType = req.verified.userType;
+        const id = req.verified.authId;
         if (userType === 'students')
             sql = `SELECT
                 classes.idx,
@@ -36,7 +36,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
             INNER JOIN classes
             ON students_in_class.class_number=classes.idx
             INNER JOIN teachers
-            ON classes.teacher_id=teachers.email OR classes.teacher_id=teachers.auth_id
+            ON classes.teacher_id=teachers.auth_id
             WHERE student_id='${id}' AND students_in_class.academy_code='${academyCode}'`;
         else if (userType === 'teachers')
             sql = `SELECT
@@ -50,7 +50,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
                 classes.updated
             FROM classes AS classes
             JOIN teachers AS teachers
-            ON classes.teacher_id=teachers.email OR classes.teacher_id=teachers.auth_id
+            ON classes.teacher_id=teachers.auth_id
             WHERE classes.academy_code='${academyCode}' AND teacher_id='${id}'
             ORDER BY classes.updated desc`;
     }
@@ -76,7 +76,7 @@ router.get('/current', useAuthCheck, (req, res, next) => {
     classes.updated
     FROM classes AS classes
     JOIN teachers AS teachers
-    ON classes.teacher_id=teachers.email OR classes.teacher_id=teachers.auth_id
+    ON classes.teacher_id=teachers.auth_id
     WHERE classes.academy_code=${academyCode}
     ORDER BY classes.updated desc`;
     dbctrl((connection) => {
@@ -90,12 +90,12 @@ router.get('/current', useAuthCheck, (req, res, next) => {
 
 /** 클래스 만들기 */
 router.post('/', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'teachers' && req.verified.usertype !== 'admins')
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     const name = req.body.name;
     const description = req.body.description;
-    const teacherId = req.verified.email;
+    const teacherId = req.verified.authId;
     const academyCode = req.verified.academyCode;
     let sql = 'INSERT INTO classes (name, description, teacher_id, academy_code) VALUES (?, ?, ?, ?)';
     dbctrl((connection) => {

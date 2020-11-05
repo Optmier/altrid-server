@@ -4,11 +4,11 @@ var router = express.Router();
 
 /** 클래스별 학생 조회 */
 router.get('/', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'teachers' && req.verified.usertype !== 'admins')
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let sql = `SELECT * FROM students_in_class`;
-    if (req.verified.usertype === 'teachers') sql += ` WHERE academy_code='${req.verified.academyCode}'`;
+    if (req.verified.userType === 'teachers') sql += ` WHERE academy_code='${req.verified.academyCode}'`;
     sql += ' GROUP BY class_number';
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -21,7 +21,7 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
 /** 특정 클래스 학생 조회 */
 router.get('/:class_number', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'teachers' && req.verified.usertype !== 'admins')
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let sql = `SELECT
@@ -34,7 +34,7 @@ router.get('/:class_number', useAuthCheck, (req, res, next) => {
     JOIN students AS students
     ON students_in_class.student_id=students.email OR students_in_class.student_id=students.auth_id
     WHERE class_number=${req.params.class_number}`;
-    if (req.verified.usertype === 'teachers') sql += ` AND academy_code='${req.verified.academyCode}'`;
+    if (req.verified.userType === 'teachers') sql += ` AND academy_code='${req.verified.academyCode}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
@@ -46,7 +46,7 @@ router.get('/:class_number', useAuthCheck, (req, res, next) => {
 
 /** 클래스에 학생 목록 추가 */
 router.post('/', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'teachers' && req.verified.usertype !== 'admins')
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     const classNumber = req.body.classNumber;
@@ -64,11 +64,11 @@ router.post('/', useAuthCheck, (req, res, next) => {
 
 /** 특정 클래스 학생 목록 제거 */
 router.delete('/:class', useAuthCheck, (req, res, next) => {
-    if (req.verified.usertype !== 'teachers' && req.verified.usertype !== 'admins')
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let sql = `DELETE FROM students_in_class WHERE class_number=${req.params.class_number}`;
-    if (req.verified.usertype === 'teachers') sql += ` AND academy_code='${req.verified.academyCode}'`;
+    if (req.verified.userType === 'teachers') sql += ` AND academy_code='${req.verified.academyCode}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
