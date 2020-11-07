@@ -16,6 +16,7 @@ const auth = require('./routes/auth');
 const studentsInTeacher = require('./routes/students_in_teacher');
 const studentsInClass = require('./routes/students_in_class');
 const classes = require('./routes/classes');
+const assignment_draft = require('./routes/assignment_draft');
 
 const secret = require('./configs/encryptionKey').certsPassword;
 
@@ -60,6 +61,8 @@ app.use('/altrid/students-in-class', studentsInClass);
 // 클래스 관련
 app.use('/altrid/classes', classes);
 app.io = indexRouter.io;
+// assignment draft 과제 관련
+app.use('/altrid/assignment-draft', assignment_draft);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
