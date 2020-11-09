@@ -2,14 +2,14 @@ var express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
-/** 선생님 id로 draft 과제 조회 */
+/** actived 과제 조회 */
 router.get('/', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     const teacher_id = req.verified.authId; // 1523016414
 
-    let sql = `SELECT * FROM assignment_draft WHERE teacher_id='${teacher_id}' ORDER BY idx DESC`;
+    let sql = `SELECT * FROM assignment_actived WHERE teacher_id='${teacher_id}' ORDER BY idx DESC`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -20,19 +20,19 @@ router.get('/', useAuthCheck, (req, res, next) => {
     });
 });
 
-/** 선생님 id로 draft 과제 생성 */
+/** actived 과제 생성 */
 router.post('/', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
-    const { title, description, time_limit, eyetrack, contents_data, file_url } = req.body;
+    const { class_number, assignment_number, title, description, time_limit, eyetrack, contents_data, file_url } = req.body;
 
     let sql = `
         INSERT INTO
-            assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data, file_url)
-        VALUES(${academy_code},${teacher_id},"${title}","${description}",${time_limit},${eyetrack},"${contents_data}","${file_url}")
+            assignment_actived(class_number, academy_code,assignment_number, teacher_id, title, description, time_limit, eyetrack, contents_data, file_url)
+        VALUES(${class_number},${academy_code},${assignment_number},${teacher_id},"${title}","${description}",${time_limit},${eyetrack},"${contents_data}","${file_url}")
     `;
 
     dbctrl((connection) => {
@@ -46,7 +46,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     });
 });
 
-/** 선생님 id로 draft 과제 수정 */
+/** actived 과제 수정 */
 router.patch('/', useAuthCheck, (req, res, next) => {
     const teacher_id = req.verified.authId;
     res.json(teacher_id);
