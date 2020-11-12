@@ -45,13 +45,13 @@ router.post('/', useAuthCheck, (req, res, next) => {
                         ${assignment_number},
                         ${teacher_id},
                         ${academy_code},
-                        ${title},
-                        ${description},
+                        "${title}",
+                        "${description}",
                         ${time_limit},
                         ${eyetrack},
                         ${contents_data},
                         ${file_url},
-                        ${due_date})`;
+                        "${due_date}")`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {

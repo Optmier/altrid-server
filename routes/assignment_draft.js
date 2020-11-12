@@ -2,7 +2,7 @@ var express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
-/** 선생님 id로 draft 과제 조회 */
+/** 선생님 id로 draft 전체 과제 조회 */
 router.get('/', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
@@ -11,14 +11,19 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
     let sql = `SELECT * FROM assignment_draft WHERE teacher_id='${teacher_id}' ORDER BY idx DESC`;
 
-    dbctrl((connection) => {
-        connection.query(sql, (error, results, fields) => {
-            connection.release();
-            if (error) res.status(400).json(error);
-            else res.json(results);
+    setTimeout(function () {
+        dbctrl((connection) => {
+            connection.query(sql, (error, results, fields) => {
+                connection.release();
+                if (error) res.status(400).json(error);
+                else res.json(results);
+            });
         });
-    });
+    }, 1000);
 });
+
+/** 선생님 id로 draft 특정 idx 과제 조회 */
+router.get('/:idx', useAuthCheck, (req, res, next) => {});
 
 /** 선생님 id로 draft 과제 생성 */
 router.post('/', useAuthCheck, (req, res, next) => {
@@ -44,15 +49,26 @@ router.post('/', useAuthCheck, (req, res, next) => {
         VALUES(${academy_code},${teacher_id},"${title}","${description}",${time_limit},${eyetrack},${contents_data},${file_url})
     `;
 
-    dbctrl((connection) => {
-        connection.query(sql, (error, results, fields) => {
-            connection.release();
-            if (error) {
-                console.error('에러 !!!', error);
-                res.status(400).json(error);
-            } else res.json(results);
+    setTimeout(function () {
+        dbctrl((connection) => {
+            connection.query(sql, (error, result1, fields) => {
+                if (error) {
+                    connection.release();
+                    res.status(400).json(error);
+                } else {
+                    let selectIdx = `SELECT LAST_INSERT_ID()`;
+
+                    connection.query(selectIdx, (error, result2, fields) => {
+                        connection.release();
+                        if (error) res.status(400).json(error);
+                        else {
+                            res.status(201).json({ result2, academy_code, teacher_id });
+                        }
+                    });
+                }
+            });
         });
-    });
+    }, 2000);
 });
 
 /** 선생님 id로 draft 과제 수정 */
@@ -86,16 +102,16 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                 WHERE
                     idx = ${idx}`;
 
-    console.log(sql);
-    dbctrl((connection) => {
-        connection.query(sql, (error, results, fields) => {
-            connection.release();
-            if (error) {
-                console.error('에러 !!!', error);
-                res.status(400).json(error);
-            } else res.json(results);
+    setTimeout(function () {
+        dbctrl((connection) => {
+            connection.query(sql, (error, results, fields) => {
+                connection.release();
+                if (error) {
+                    res.status(400).json(error);
+                } else res.json(results);
+            });
         });
-    });
+    }, 2000);
 });
 
 module.exports = router;
