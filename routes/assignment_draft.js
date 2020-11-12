@@ -101,6 +101,24 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                     file_url= ${file_url}
                 WHERE
                     idx = ${idx}`;
+    setTimeout(function () {
+        dbctrl((connection) => {
+            connection.query(sql, (error, results, fields) => {
+                connection.release();
+                if (error) {
+                    res.status(400).json(error);
+                } else res.json(results);
+            });
+        });
+    }, 2000);
+});
+
+/** 선생님 id로 draft 과제 삭제 */
+router.delete('/:idx', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    const sql = `DELETE FROM assignment_draft WHERE idx=${req.params.idx}`;
 
     setTimeout(function () {
         dbctrl((connection) => {
