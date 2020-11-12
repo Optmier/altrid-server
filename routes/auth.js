@@ -141,7 +141,7 @@ router.get('/', useAuthCheck, (req, res, next) => {
 });
 
 /* 통합 로그아웃 */
-router.delete('/', useAuthCheck, (req, res, next) => {
+router.delete('/', (req, res, next) => {
     /** 쿠키 값 지우고 로그아웃 메시지 전송 */
     console.warn('쿠키값 지우기');
     deleteCookie(res, 'sid');
