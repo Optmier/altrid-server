@@ -44,10 +44,10 @@ router.post('/', useAuthCheck, (req, res, next) => {
         file_url = file_url + `"`;
     }
     let sql = `
-        INSERT INTO
-            assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data, file_url)
-        VALUES('${academy_code}','${teacher_id}',"${title}","${description}",${time_limit},${eyetrack},${contents_data},${file_url})
-    `;
+    INSERT INTO
+        assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data, file_url)
+    VALUES('${academy_code}','${teacher_id}',"${title}","${description}",${time_limit},${eyetrack},${contents_data},${file_url})
+`;
 
     setTimeout(function () {
         dbctrl((connection) => {
