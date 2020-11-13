@@ -28,12 +28,20 @@ const uploadContentsRequests = multer({
 });
 
 /** 컨텐츠 요청 첨부파일 저장 */
-router.post('/requests-contents', [useAuthCheck, uploadContentsRequests.any()], (req, res, next) => {
+router.post('/requests-contents/:idx', [useAuthCheck, uploadContentsRequests.any()], (req, res, next) => {
     if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     if (!req.files) return res.status(400).json({ code: 'no-files', message: 'No files' });
-    res.send('requests-contents/' + req.files[0].filename);
+
+    let sql = `UPDATE assignment_draft SET file_url='requests-contents/${req.files[0].filename}' WHERE idx=${req.params.idx}`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json({ ...results, file_name: 'requests-contents/' + req.files[0].filename });
+        });
+    });
 });
 
 /** 컨텐츠 요청 첨부파일 보기 */
