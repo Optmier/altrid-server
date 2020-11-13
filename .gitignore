@@ -5,7 +5,7 @@ configs/dbconfig.js
 configs/encryptionkey.js
 configs/modes.js
 configs/whitelists.js
-TestImages/*
+UploadedFiles/*
 
 
 # misc

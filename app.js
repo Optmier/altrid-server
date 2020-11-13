@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const indexRouter = require('./routes/index');
 /** ALTR!D */
+const __files = require('./routes/_files');
 const userStudents = require('./routes/students');
 const userTeachers = require('./routes/teachers');
 const userAdmins = require('./routes/admins');
@@ -17,7 +18,10 @@ const studentsInTeacher = require('./routes/students_in_teacher');
 const studentsInClass = require('./routes/students_in_class');
 const classes = require('./routes/classes');
 const assignment_draft = require('./routes/assignment_draft');
-const assignment_actived = require('./routes/assignment_actived');
+const assignmentAdmin = require('./routes/assignment_admin');
+const assignmentActived = require('./routes/assignment_actived');
+const assignmentResult = require('./routes/assignment_result');
+const assignmentReport = require('./routes/assignment_report');
 
 const secret = require('./configs/encryptionKey').certsPassword;
 
@@ -45,6 +49,8 @@ app.use(
 
 app.use('/altrid', indexRouter);
 /** ALTR!D */
+// 파일 라우터
+app.use('/altrid/files', __files);
 // 학생 테이블 관리
 app.use('/altrid/students', userStudents);
 // 강사 테이블 관리
@@ -61,11 +67,18 @@ app.use('/altrid/students-in-teacher', studentsInTeacher);
 app.use('/altrid/students-in-class', studentsInClass);
 // 클래스 관련
 app.use('/altrid/classes', classes);
-app.io = indexRouter.io;
+// 생성된 과제 관련
+app.use('/altrid/assignment-admin', assignmentAdmin);
+// 과제 수행 정보 관련
+app.use('/altrid/assignment-result', assignmentResult);
+// 과제 보고서 관련
+app.use('/altrid/assignment-report', assignmentReport);
 // assignment draft 과제 관련
 app.use('/altrid/assignment-draft', assignment_draft);
 // assignment actived 과제 관련
-app.use('/altrid/assignment-actived', assignment_actived);
+app.use('/altrid/assignment-actived', assignmentActived);
+
+app.io = indexRouter.io;
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
