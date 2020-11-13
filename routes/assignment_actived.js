@@ -9,7 +9,7 @@ router.get('/:class/:id', useAuthCheck, (req, res, next) => {
     // 클래스 번호 같은 경우는 추후 다른 인원과의 고의적인 충돌을 방지하기 위해 매커니즘을 변경할 필요 있음!
     const activeClassNumber = req.params.class;
 
-    let sql = `SELECT idx, title, description, time_limit, eyetrack, contents_data FROM assignment_actived WHERE idx=${activeId} AND class_number=${activeClassNumber} AND academy_code='${academyCode}'`;
+    let sql = `SELECT idx, title, description, time_limit, eyetrack, contents_data, due_date, created, updated FROM assignment_actived WHERE idx=${activeId} AND class_number=${activeClassNumber} AND academy_code='${academyCode}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
