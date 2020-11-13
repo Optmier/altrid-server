@@ -46,7 +46,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     let sql = `
         INSERT INTO
             assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data, file_url)
-        VALUES(${academy_code},${teacher_id},"${title}","${description}",${time_limit},${eyetrack},${contents_data},${file_url})
+        VALUES('${academy_code}','${teacher_id}',"${title}","${description}",${time_limit},${eyetrack},${contents_data},${file_url})
     `;
 
     setTimeout(function () {
@@ -79,16 +79,16 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     const { idx, title, description, time_limit, eyetrack } = req.body;
     let { contents_data, file_url } = req.body;
 
-    if (contents_data !== null) {
-        //contents_data = contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'");
-        contents_data = `"` + contents_data;
-        contents_data = contents_data + `"`;
-    }
-    if (file_url !== null) {
-        //file_url = file_url.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'");
-        contents_data = `"` + contents_data;
-        contents_data = contents_data + `"`;
-    }
+    // if (contents_data !== null) {
+    //     //contents_data = contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'");
+    //     contents_data = `"` + contents_data;
+    //     contents_data = contents_data + `"`;
+    // }
+    // if (file_url !== null) {
+    //     //file_url = file_url.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'");
+    //     contents_data = `"` + contents_data;
+    //     contents_data = contents_data + `"`;
+    // }
 
     let sql = `UPDATE
                     assignment_draft
@@ -97,8 +97,8 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                     description = "${description}",
                     eyetrack = ${eyetrack},
                     time_limit = ${time_limit},
-                    contents_data= ${contents_data},
-                    file_url= ${file_url}
+                    contents_data= '${contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
+                    file_url= '${file_url}'
                 WHERE
                     idx = ${idx}`;
     setTimeout(function () {
