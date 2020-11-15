@@ -19,7 +19,7 @@ router.get('/', useAuthCheck, (req, res, next) => {
                 else res.json(results);
             });
         });
-    }, 1000);
+    }, 100);
 });
 
 /** 선생님 id로 draft 특정 idx 과제 조회 */
@@ -33,21 +33,15 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
     const { title, description, time_limit, eyetrack } = req.body;
-    let { contents_data, file_url } = req.body;
+    let { contents_data } = req.body;
 
     if (contents_data !== null) {
-        contents_data = `"` + contents_data;
-        contents_data = contents_data + `"`;
+        contents_data = `'${contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}'`;
     }
-    if (file_url !== null) {
-        file_url = `"` + file_url;
-        file_url = file_url + `"`;
-    }
-    let sql = `
-    INSERT INTO
-        assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data, file_url)
-    VALUES('${academy_code}','${teacher_id}',"${title}","${description}",${time_limit},${eyetrack},${contents_data},${file_url})
-`;
+
+    let sql = `INSERT INTO
+                assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data)
+               VALUES('${academy_code}','${teacher_id}',"${title}","${description}",${time_limit},${eyetrack},${contents_data})`;
 
     setTimeout(function () {
         dbctrl((connection) => {
@@ -68,7 +62,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
                 }
             });
         });
-    }, 2000);
+    }, 1000);
 });
 
 /** 선생님 id로 draft 과제 수정 */
@@ -79,16 +73,12 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     const { idx, title, description, time_limit, eyetrack } = req.body;
     let { contents_data, file_url } = req.body;
 
-    // if (contents_data !== null) {
-    //     //contents_data = contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'");
-    //     contents_data = `"` + contents_data;
-    //     contents_data = contents_data + `"`;
-    // }
-    // if (file_url !== null) {
-    //     //file_url = file_url.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'");
-    //     contents_data = `"` + contents_data;
-    //     contents_data = contents_data + `"`;
-    // }
+    if (contents_data !== null) {
+        contents_data = `'${contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}'`;
+    }
+    if (contents_data !== null) {
+        file_url = `${file_url}`;
+    }
 
     let sql = `UPDATE
                     assignment_draft
@@ -97,8 +87,8 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                     description = "${description}",
                     eyetrack = ${eyetrack},
                     time_limit = ${time_limit},
-                    contents_data= '${contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
-                    file_url= '${file_url}'
+                    contents_data= ${contents_data},
+                    file_url= ${file_url}
                 WHERE
                     idx = ${idx}`;
     setTimeout(function () {
@@ -110,7 +100,7 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                 } else res.json(results);
             });
         });
-    }, 2000);
+    }, 1000);
 });
 
 /** 선생님 id로 draft 과제 삭제 */
@@ -129,7 +119,7 @@ router.delete('/:idx', useAuthCheck, (req, res, next) => {
                 } else res.json(results);
             });
         });
-    }, 2000);
+    }, 1000);
 });
 
 module.exports = router;
