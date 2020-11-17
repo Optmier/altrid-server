@@ -71,13 +71,10 @@ router.patch('/', useAuthCheck, (req, res, next) => {
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     const { idx, title, description, time_limit, eyetrack } = req.body;
-    let { contents_data, file_url } = req.body;
+    let { contents_data } = req.body;
 
     if (contents_data !== null) {
         contents_data = `'${contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}'`;
-    }
-    if (contents_data !== null) {
-        file_url = `${file_url}`;
     }
 
     let sql = `UPDATE
@@ -87,8 +84,7 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                     description = "${description}",
                     eyetrack = ${eyetrack},
                     time_limit = ${time_limit},
-                    contents_data= ${contents_data},
-                    file_url= ${file_url}
+                    contents_data= ${contents_data}
                 WHERE
                     idx = ${idx}`;
     setTimeout(function () {
