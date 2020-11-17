@@ -10,7 +10,9 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
 
-    const { class_number, assignment_number, due_date, title, description, time_limit, eyetrack, contents_data, file_url } = req.body;
+    const { class_number, assignment_number, due_date, title, description, time_limit, eyetrack, file_url } = req.body;
+    let { contents_data } = req.body;
+    contents_data = `'${contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}'`;
 
     let sql = `INSERT INTO 
                 assignment_actived(
@@ -28,14 +30,14 @@ router.post('/', useAuthCheck, (req, res, next) => {
                 VALUES(
                         ${class_number},
                         ${assignment_number},
-                        ${teacher_id},
-                        ${academy_code},
+                        "${teacher_id}",
+                        "${academy_code}",
                         "${title}",
                         "${description}",
                         ${time_limit},
                         ${eyetrack},
                         ${contents_data},
-                        ${file_url},
+                        "${file_url}",
                         "${due_date}")`;
 
     dbctrl((connection) => {
@@ -71,14 +73,17 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
     const academyCode = req.verified.academyCode;
     const classNumber = req.params.class;
 
-    let sql = `SELECT idx, title, description, time_limit, eyetrack, contents_data FROM assignment_actived WHERE class_number=${classNumber} AND academy_code='${academyCode}'`;
-    dbctrl((connection) => {
-        connection.query(sql, (error, results, fields) => {
-            connection.release();
-            if (error) res.status(400).json(error);
-            else res.json(results);
+    let sql = `SELECT idx, title, description, time_limit, eyetrack, contents_data, due_date, created FROM assignment_actived WHERE class_number=${classNumber} AND academy_code='${academyCode}' ORDER BY idx DESC`;
+
+    setTimeout(function () {
+        dbctrl((connection) => {
+            connection.query(sql, (error, results, fields) => {
+                connection.release();
+                if (error) res.status(400).json(error);
+                else res.json(results);
+            });
         });
-    });
+    }, 1000);
 });
 
 module.exports = router;
