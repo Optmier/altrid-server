@@ -73,7 +73,7 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
     const academyCode = req.verified.academyCode;
     const classNumber = req.params.class;
 
-    let sql = `SELECT idx, title, description, time_limit, eyetrack, contents_data, due_date, created FROM assignment_actived WHERE class_number=${classNumber} AND academy_code='${academyCode}' ORDER BY idx DESC`;
+    let sql = `SELECT idx, title, assignment_number, description, time_limit, eyetrack, contents_data, due_date, created FROM assignment_actived WHERE class_number=${classNumber} AND academy_code='${academyCode}' ORDER BY idx DESC`;
 
     setTimeout(function () {
         dbctrl((connection) => {
@@ -81,6 +81,34 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
                 connection.release();
                 if (error) res.status(400).json(error);
                 else res.json(results);
+            });
+        });
+    }, 1000);
+});
+
+/** 특정 actived 과제 완료 */
+router.patch('/', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    const { now, idx } = req.body;
+
+    let sql = `UPDATE
+                    assignment_actived
+                SET
+                    due_date = "${now}"
+                WHERE
+                    idx = ${idx}`;
+
+    console.log(sql);
+
+    setTimeout(function () {
+        dbctrl((connection) => {
+            connection.query(sql, (error, results, fields) => {
+                connection.release();
+                if (error) {
+                    res.status(400).json(error);
+                } else res.json(results);
             });
         });
     }, 1000);
