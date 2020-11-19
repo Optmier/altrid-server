@@ -107,4 +107,30 @@ router.post('/', useAuthCheck, (req, res, next) => {
     });
 });
 
+/**클래스 번호로 클래스 정보 및 선생님 이름 조회 */
+router.get('/class/:class_number', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    let sql = `SELECT
+                classes.idx,
+                classes.name as class_name,
+                classes.description,
+                classes.teacher_id,
+                teachers.name as teacher_name
+            FROM classes AS classes
+            JOIN teachers AS teachers
+            ON classes.teacher_id = teachers.auth_id
+            WHERE classes.idx=${req.params.class_number}`;
+
+    console.log(sql);
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 module.exports = router;

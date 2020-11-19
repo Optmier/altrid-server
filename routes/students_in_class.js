@@ -21,7 +21,7 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
 /** 특정 클래스 학생 조회 */
 router.get('/:class_number', useAuthCheck, (req, res, next) => {
-    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
+    if (req.verified.userType !== 'teachers')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let sql = `SELECT
@@ -29,12 +29,13 @@ router.get('/:class_number', useAuthCheck, (req, res, next) => {
     students_in_class.class_number,
     students_in_class.academy_code,
     students_in_class.student_id,
-    students.name,
+    students.name
     FROM students_in_class AS students_in_class
     JOIN students AS students
     ON students_in_class.student_id=students.email OR students_in_class.student_id=students.auth_id
-    WHERE class_number=${req.params.class_number}`;
-    if (req.verified.userType === 'teachers') sql += ` AND academy_code='${req.verified.academyCode}'`;
+    WHERE students_in_class.class_number=${req.params.class_number}`;
+    if (req.verified.userType === 'teachers') sql += ` AND students_in_class.academy_code='${req.verified.academyCode}'`;
+
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
