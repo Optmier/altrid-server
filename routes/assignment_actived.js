@@ -100,8 +100,6 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                 WHERE
                     idx = ${idx}`;
 
-    console.log(sql);
-
     setTimeout(function () {
         dbctrl((connection) => {
             connection.query(sql, (error, results, fields) => {
