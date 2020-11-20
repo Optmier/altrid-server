@@ -7,7 +7,7 @@ router.get('/:actived_number', useAuthCheck, (req, res, next) => {
     const academyCode = req.verified.academyCode;
     const activedNumber = req.params.actived_number;
 
-    let sql = `SELECT students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number, result.score_percentage, result.score_points, result.user_data, result.eyetrack_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
+    let sql = `SELECT actived.idx AS actived_number, students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number AS submitted, result.score_percentage, result.score_points, result.eyetrack, result.user_data, result.eyetrack_data, actived.contents_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
         FROM students_in_class AS in_class
         LEFT JOIN students
         ON in_class.student_id=students.auth_id AND in_class.academy_code=students.academy_code
@@ -16,13 +16,47 @@ router.get('/:actived_number', useAuthCheck, (req, res, next) => {
         LEFT JOIN assignment_result AS result
         ON actived.idx=result.actived_number AND students.auth_id=result.student_id
         WHERE in_class.academy_code='${academyCode}' AND actived.idx=${activedNumber}`;
-    dbctrl(connection => {
+    dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
-            if(error) res.status(400).json(error);
-            else res.json(results);
-        })
-    })
+            if (error) res.status(400).json(error);
+            else
+                res.json(
+                    results.map((d, idx) => {
+                        return { ...d, idx: idx };
+                    }),
+                );
+        });
+    });
+});
+
+/** 보고서를 위한 학생별 데이터 가져오기 */
+router.get('/:actived_number/:student_id', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+    const activedNumber = req.params.actived_number;
+    const studentId = req.params.student_id;
+
+    let sql = `SELECT actived.idx AS actived_number, students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number AS submitted, result.score_percentage, result.score_points, result.eyetrack, result.user_data, result.eyetrack_data, actived.contents_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
+        FROM students_in_class AS in_class
+        LEFT JOIN students
+        ON in_class.student_id=students.auth_id AND in_class.academy_code=students.academy_code
+        JOIN assignment_actived AS actived
+        ON in_class.class_number=actived.class_number
+        LEFT JOIN assignment_result AS result
+        ON actived.idx=result.actived_number AND students.auth_id=result.student_id
+        WHERE in_class.academy_code='${academyCode}' AND actived.idx=${activedNumber} AND students.auth_id='${studentId}'`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else
+                res.json(
+                    results.map((d, idx) => {
+                        return { ...d, idx: idx };
+                    }),
+                );
+        });
+    });
 });
 
 /** 전체 가져오기 */
@@ -32,7 +66,7 @@ router.get('/', useAuthCheck, (req, res, next) => {
     const offset = req.query.offset;
     const order = 0; // 0: asc, 1: desc
 
-    let sql = `SELECT actived.idx AS actived_number, actived.created, students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number AS submitted, result.score_percentage, result.score_points, result.user_data, result.eyetrack_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
+    let sql = `SELECT actived.idx AS actived_number, actived.created, students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number AS submitted, result.score_percentage, result.score_points, result.eyetrack, result.user_data, result.eyetrack_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
         FROM students_in_class AS in_class
         LEFT JOIN students
         ON in_class.student_id=students.auth_id AND in_class.academy_code=students.academy_code
@@ -40,33 +74,32 @@ router.get('/', useAuthCheck, (req, res, next) => {
         ON in_class.class_number=actived.class_number
         LEFT JOIN assignment_result AS result
         ON actived.idx=result.actived_number AND students.auth_id=result.student_id
-        WHERE in_class.academy_code='${academyCode}' ORDER BY actived.created DESC`
-        //  GROUP BY actived.idx`;
+        WHERE in_class.academy_code='${academyCode}' ORDER BY actived.created DESC`;
+    //  GROUP BY actived.idx`;
     // if(order !== undefined && order !== null) sql += ` ORDER BY actived.created ${!order ? 'ASC' : 'DESC'}`;
     // if(limit !== undefined && limit !== null && offset !== undefined && offset !== null) sql += ` LIMIT ${limit} OFFSET ${offset}`;
-    dbctrl(connection => {
+    dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             console.log(results);
             connection.release();
-            if(error) res.status(400).json(error);
+            if (error) res.status(400).json(error);
             else {
                 const obj = {};
-                results.map(data => {
+                results.map((data) => {
                     !obj[data.actived_number] && (obj[data.actived_number] = []);
                     obj[data.actived_number].push(data);
                 });
 
-                if(Object.keys(obj).length > 1) {
+                if (Object.keys(obj).length > 1) {
                     const dk = Object.keys(obj);
                     res.json(obj[dk[dk.length - 2]]);
-                }
-                else {
+                } else {
                     const first = Object.keys(obj)[0];
                     res.json(obj[first]);
                 }
             }
-        })
-    })
+        });
+    });
 });
 
 /** 초기화 */
