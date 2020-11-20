@@ -40,45 +40,39 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
             WHERE student_id='${id}' AND students_in_class.academy_code='${academyCode}'`;
         else if (userType === 'teachers')
             sql = `SELECT
-                classes.idx,
-                classes.name,
-                classes.description,
-                teachers.name AS teacher_name,
-                (SELECT COUNT(*) FROM students_in_class WHERE classes.idx=students_in_class.class_number AND classes.academy_code=students_in_class.academy_code)
-                AS num_of_students,
-                classes.created,
-                classes.updated
-            FROM classes AS classes
-            JOIN teachers AS teachers
-            ON classes.teacher_id=teachers.auth_id
-            WHERE classes.academy_code='${academyCode}' AND teacher_id='${id}'
-            ORDER BY classes.updated desc`;
+                        classes.idx,
+                        classes.name,
+                        classes.description,
+                        teachers.name AS teacher_name,
+                        COUNT(assignment_actived.class_number) AS class_count,
+                        (
+                        SELECT
+                            COUNT(*)
+                        FROM
+                            students_in_class
+                        WHERE
+                            classes.idx = students_in_class.class_number AND classes.academy_code = students_in_class.academy_code
+                    ) AS num_of_students,
+                    classes.created,
+                    classes.updated
+                    FROM
+                        classes AS classes
+                    JOIN
+                        teachers AS teachers
+                    ON
+                        classes.teacher_id = teachers.auth_id
+                    LEFT JOIN
+                        assignment_actived AS assignment_actived
+                    ON
+                        classes.idx = assignment_actived.class_number
+                    WHERE
+                        classes.academy_code = '${academyCode}' AND classes.teacher_id = '${id}'
+                    GROUP BY
+                        classes.idx
+                    ORDER BY
+                        classes.updated
+                    DESC `;
     }
-    dbctrl((connection) => {
-        connection.query(sql, (error, results, fields) => {
-            connection.release();
-            if (error) res.status(400).json(error);
-            else res.json(results);
-        });
-    });
-});
-
-/** 현재 로그인한 사용자별로 클래스 목록 맞춤 조회 */
-router.get('/current', useAuthCheck, (req, res, next) => {
-    const academyCode = req.params.code || '';
-    let sql = `SELECT
-    classes.idx,
-    classes.name,
-    classes.description,
-    teachers.name AS teacher_name,
-    (SELECT COUNT(*) FROM students_in_class WHERE classes.idx=students_in_class.class_number AND classes.academy_code=students_in_class.academy_code) AS num_of_students,
-    classes.created,
-    classes.updated
-    FROM classes AS classes
-    JOIN teachers AS teachers
-    ON classes.teacher_id=teachers.auth_id
-    WHERE classes.academy_code=${academyCode}
-    ORDER BY classes.updated desc`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
