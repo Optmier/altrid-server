@@ -86,7 +86,7 @@ router.get('/in-class/:code', useAuthCheckTemp, (req, res, next) => {
 /** 학원별 선생님 존재 여부 확인 */
 router.get('/in-class/:code/:teacher_id', useAuthCheck, (req, res, next) => {
     const academyCode = req.params.code === 'current' ? req.verified.academyCode : req.params.code;
-    let sql = `SELECT COUNT(*) AS is_exists FROM teachers WHERE academy_code='${academyCode}' AND auth_id='${req.params.teacher_id}'`;
+    let sql = `SELECT COUNT(*) AS is_exists, auth_id FROM teachers WHERE academy_code='${academyCode}' AND email='${req.params.teacher_id}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();

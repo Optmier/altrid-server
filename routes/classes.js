@@ -103,7 +103,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
 
 /**클래스 번호로 클래스 정보 및 선생님 이름 조회 */
 router.get('/class/:class_number', useAuthCheck, (req, res, next) => {
-    if (req.verified.userType !== 'teachers')
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'students')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let sql = `SELECT
