@@ -44,6 +44,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
                         classes.name,
                         classes.description,
                         teachers.name AS teacher_name,
+                        max(assignment_actived.due_date) as max_due_date,
                         COUNT(assignment_actived.class_number) AS class_count,
                         (
                         SELECT
@@ -70,8 +71,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
                     GROUP BY
                         classes.idx
                     ORDER BY
-                        classes.updated
-                    DESC `;
+                        classes.updated DESC `;
     }
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
