@@ -9,7 +9,29 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
     const teacher_id = req.verified.authId; // 1523016414
 
-    let sql = `SELECT * FROM assignment_draft WHERE teacher_id='${teacher_id}' ORDER BY idx DESC`;
+    let sql = `SELECT
+                    GROUP_CONCAT(classes.name) AS class_name,
+                    COUNT(
+                        assignment_actived.class_number
+                    ) AS actived_count,
+                    assignment_draft.*
+                FROM
+                    assignment_draft AS assignment_draft
+                LEFT JOIN
+                    assignment_actived AS assignment_actived
+                ON
+                    assignment_draft.idx = assignment_actived.assignment_number
+                LEFT JOIN
+                    classes AS classes
+                ON
+                    classes.idx = assignment_actived.class_number
+                WHERE
+                    assignment_draft.teacher_id = '${teacher_id}'
+                GROUP BY
+                    assignment_draft.idx
+                ORDER BY
+                    assignment_draft.updated
+                DESC `;
 
     setTimeout(function () {
         dbctrl((connection) => {
