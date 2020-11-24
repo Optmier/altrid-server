@@ -112,4 +112,21 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     }, 1000);
 });
 
+/** 특정 actived 과제 삭제 */
+router.delete('/:idx', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    const sql = `DELETE FROM assignment_actived WHERE idx=${req.params.idx}`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) {
+                res.status(400).json(error);
+            } else res.json(results);
+        });
+    });
+});
+
 module.exports = router;
