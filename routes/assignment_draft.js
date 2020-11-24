@@ -33,15 +33,13 @@ router.get('/', useAuthCheck, (req, res, next) => {
                     assignment_draft.updated
                 DESC `;
 
-    setTimeout(function () {
-        dbctrl((connection) => {
-            connection.query(sql, (error, results, fields) => {
-                connection.release();
-                if (error) res.status(400).json(error);
-                else res.json(results);
-            });
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
         });
-    }, 100);
+    });
 });
 
 /** 선생님 id로 draft 특정 idx 과제 조회 */

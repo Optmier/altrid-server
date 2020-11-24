@@ -73,7 +73,7 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
     const academyCode = req.verified.academyCode;
     const classNumber = req.params.class;
 
-    let sql = `SELECT idx, title, assignment_number, description, time_limit, eyetrack, contents_data, due_date, created FROM assignment_actived WHERE class_number=${classNumber} AND academy_code='${academyCode}' ORDER BY due_date desc`;
+    let sql = `SELECT idx, title, assignment_number, description, time_limit, eyetrack, contents_data, due_date, created FROM assignment_actived WHERE class_number=${classNumber} AND academy_code='${academyCode}' ORDER BY updated desc`;
 
     setTimeout(function () {
         dbctrl((connection) => {
