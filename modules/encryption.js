@@ -64,7 +64,7 @@ const issueToken = (email, username, usertype = 'customer', academyCode = '', is
         },
     );
     const verified = jwt.verify(token, jwtSecret);
-    delete verified.authId;
+    // delete verified.authId;
     return { auth: verified, token: token };
 };
 

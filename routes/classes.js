@@ -28,6 +28,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
                 classes.name,
                 classes.description,
                 teachers.name AS teacher_name,
+                COUNT(assignment_actived.class_number) AS class_count,
                 (SELECT COUNT(*) FROM students_in_class WHERE classes.idx=students_in_class.class_number AND classes.academy_code=students_in_class.academy_code)
                 AS num_of_students,
                 classes.created,
@@ -37,6 +38,8 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
             ON students_in_class.class_number=classes.idx
             INNER JOIN teachers
             ON classes.teacher_id=teachers.auth_id
+            LEFT JOIN assignment_actived AS assignment_actived
+            ON classes.idx = assignment_actived.class_number
             WHERE student_id='${id}' AND students_in_class.academy_code='${academyCode}'`;
         else if (userType === 'teachers')
             sql = `SELECT

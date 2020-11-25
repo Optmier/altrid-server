@@ -136,8 +136,24 @@ router.delete('/temp', (req, res, next) => {
 /* 인증 토큰 유효 여부 확인 */
 router.get('/', useAuthCheck, (req, res, next) => {
     console.log(req.verified);
-    delete req.verified.authId;
+    // delete req.verified.authId;
     res.json(req.verified);
+});
+
+/** 이메일 본인 확인 */
+router.post('/check-email-self', useAuthCheck, (req, res, next) => {
+    const currentAuthId = req.verified.authId;
+    const requestEmail = req.body.email;
+    const userType = req.verified.userType;
+
+    let sql = `SELECT COUNT(*) AS ok FROM ${userType} WHERE auth_id='${currentAuthId}' AND email='${requestEmail}'`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results[0]);
+        });
+    });
 });
 
 /* 통합 로그아웃 */

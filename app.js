@@ -22,6 +22,7 @@ const assignmentAdmin = require('./routes/assignment_admin');
 const assignmentActived = require('./routes/assignment_actived');
 const assignmentResult = require('./routes/assignment_result');
 const assignmentReport = require('./routes/assignment_report');
+const others = require('./routes/others');
 
 const secret = require('./configs/encryptionKey').certsPassword;
 
@@ -77,6 +78,8 @@ app.use('/altrid/assignment-report', assignmentReport);
 app.use('/altrid/assignment-draft', assignment_draft);
 // assignment actived 과제 관련
 app.use('/altrid/assignment-actived', assignmentActived);
+// 기타
+app.use('/altrid/others', others);
 
 app.io = indexRouter.io;
 
