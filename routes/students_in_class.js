@@ -54,6 +54,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const academyCode = req.verified.academyCode;
     const students = req.body.students.map((data) => [classNumber, academyCode, data.student_id]);
     let sql = 'INSERT INTO students_in_class (class_number, academy_code, student_id) VALUES ?';
+
     dbctrl((connection) => {
         connection.query(sql, [students], (error, results, fields) => {
             connection.release();
@@ -68,7 +69,7 @@ router.delete('/:class', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
-    let sql = `DELETE FROM students_in_class WHERE class_number=${req.params.class_number}`;
+    let sql = `DELETE FROM students_in_class WHERE class_number=${req.params.class}`;
     if (req.verified.userType === 'teachers') sql += ` AND academy_code='${req.verified.academyCode}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {

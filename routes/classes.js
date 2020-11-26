@@ -117,12 +117,58 @@ router.get('/class/:class_number', useAuthCheck, (req, res, next) => {
             ON classes.teacher_id = teachers.auth_id
             WHERE classes.idx=${req.params.class_number}`;
 
-    console.log(sql);
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
             if (error) res.status(400).json(error);
             else res.json(results);
+        });
+    });
+});
+
+/** class 정보 수정 */
+router.patch('/:class', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    const academy_code = req.verified.academyCode;
+    const teacher_id = req.verified.authId;
+    const { name, description } = req.body;
+    const idx = req.params.class;
+
+    let sql = `UPDATE
+                    classes
+                SET
+                    name = "${name}",
+                    description = "${description}",
+                    teacher_id = "${teacher_id}",
+                    academy_code = "${academy_code}"
+                WHERE
+                    idx = ${idx}`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) {
+                res.status(400).json(error);
+            } else res.json(results);
+        });
+    });
+});
+
+/** class 삭제 */
+/** 특정 클래스 학생 목록 제거 */
+router.delete('/:class', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    let sql = `DELETE FROM classes WHERE idx=${req.params.class}`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.status(204).json(results);
         });
     });
 });
