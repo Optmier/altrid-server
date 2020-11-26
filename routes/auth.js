@@ -133,11 +133,23 @@ router.delete('/temp', (req, res, next) => {
     res.status(204).json();
 });
 
-/* 인증 토큰 유효 여부 확인 */
+/** 인증 토큰 유효 여부 확인 */
 router.get('/', useAuthCheck, (req, res, next) => {
     console.log(req.verified);
     // delete req.verified.authId;
     res.json(req.verified);
+});
+
+/** 인증 토큰 재발급 */
+router.patch('/', useAuthCheck, (req, res, next) => {
+    const { authId, userName, userType, academyCode } = req.verified;
+    tasksAuthLoginAfterCheck({
+        authId: authId,
+        name: userName,
+        userType: userType,
+        academyCode: academyCode,
+        res: res,
+    });
 });
 
 /** 이메일 본인 확인 */

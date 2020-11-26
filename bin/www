@@ -27,7 +27,7 @@ if (process.env.RUN_MODE === 'dev') {
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '8080');
+var port = normalizePort(process.env.PORT || (process.env.RUN_MODE === 'dev' ? '8080' : '8020'));
 app.set('port', port);
 
 /**
