@@ -48,38 +48,38 @@ app.use(
     }),
 );
 
-app.use('/altrid', indexRouter);
+app.use('/', indexRouter);
 /** ALTR!D */
 // 파일 라우터
-app.use('/altrid/files', __files);
+app.use('/files', __files);
 // 학생 테이블 관리
-app.use('/altrid/students', userStudents);
+app.use('/students', userStudents);
 // 강사 테이블 관리
-app.use('/altrid/teachers', userTeachers);
+app.use('/teachers', userTeachers);
 // 관리자 테이블 관리
-app.use('/altrid/admins', userAdmins);
+app.use('/admins', userAdmins);
 // 계약 학원 테이블 관리
-app.use('/altrid/academies', academies);
+app.use('/academies', academies);
 // 로그인 및 인증 관련
-app.use('/altrid/auth', auth);
+app.use('/auth', auth);
 // 선생님별 학생들 관련
-app.use('/altrid/students-in-teacher', studentsInTeacher);
+app.use('/students-in-teacher', studentsInTeacher);
 // 클래스별 학생들 관련
-app.use('/altrid/students-in-class', studentsInClass);
+app.use('/students-in-class', studentsInClass);
 // 클래스 관련
-app.use('/altrid/classes', classes);
+app.use('/classes', classes);
 // 생성된 과제 관련
-app.use('/altrid/assignment-admin', assignmentAdmin);
+app.use('/assignment-admin', assignmentAdmin);
 // 과제 수행 정보 관련
-app.use('/altrid/assignment-result', assignmentResult);
+app.use('/assignment-result', assignmentResult);
 // 과제 보고서 관련
-app.use('/altrid/assignment-report', assignmentReport);
+app.use('/assignment-report', assignmentReport);
 // assignment draft 과제 관련
-app.use('/altrid/assignment-draft', assignment_draft);
+app.use('/assignment-draft', assignment_draft);
 // assignment actived 과제 관련
-app.use('/altrid/assignment-actived', assignmentActived);
+app.use('/assignment-actived', assignmentActived);
 // 기타
-app.use('/altrid/others', others);
+app.use('/others', others);
 
 app.io = indexRouter.io;
 

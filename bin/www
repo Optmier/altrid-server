@@ -17,7 +17,7 @@ if (process.env.RUN_MODE === 'dev') {
 } else {
     https = require('https');
     options = {
-        pfx: fs.readFileSync(path.join(__dirname.replace('bin', 'certs'), 'certificate.pfx')),
+        pfx: fs.readFileSync(path.join(__dirname.replace('bin', 'certs'), 'apis.altridedge.com.pfx')),
         passphrase: certsPassword,
     };
 }
