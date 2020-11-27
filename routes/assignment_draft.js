@@ -63,26 +63,24 @@ router.post('/', useAuthCheck, (req, res, next) => {
                 assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data)
                VALUES('${academy_code}','${teacher_id}',"${title}","${description}",${time_limit},${eyetrack},${contents_data})`;
 
-    setTimeout(function () {
-        dbctrl((connection) => {
-            connection.query(sql, (error, result1, fields) => {
-                if (error) {
-                    connection.release();
-                    res.status(400).json(error);
-                } else {
-                    let selectIdx = `SELECT LAST_INSERT_ID()`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, result1, fields) => {
+            if (error) {
+                connection.release();
+                res.status(400).json(error);
+            } else {
+                let selectIdx = `SELECT LAST_INSERT_ID()`;
 
-                    connection.query(selectIdx, (error, result2, fields) => {
-                        connection.release();
-                        if (error) res.status(400).json(error);
-                        else {
-                            res.status(201).json({ result2, academy_code, teacher_id });
-                        }
-                    });
-                }
-            });
+                connection.query(selectIdx, (error, result2, fields) => {
+                    connection.release();
+                    if (error) res.status(400).json(error);
+                    else {
+                        res.status(201).json({ result2, academy_code, teacher_id });
+                    }
+                });
+            }
         });
-    }, 1000);
+    });
 });
 
 /** 선생님 id로 draft 과제 수정 */
@@ -107,16 +105,15 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                     contents_data= ${contents_data}
                 WHERE
                     idx = ${idx}`;
-    setTimeout(function () {
-        dbctrl((connection) => {
-            connection.query(sql, (error, results, fields) => {
-                connection.release();
-                if (error) {
-                    res.status(400).json(error);
-                } else res.json(results);
-            });
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) {
+                res.status(400).json(error);
+            } else res.json(results);
         });
-    }, 1000);
+    });
 });
 
 /** 선생님 id로 draft 과제 삭제 */
@@ -126,16 +123,14 @@ router.delete('/:idx', useAuthCheck, (req, res, next) => {
 
     const sql = `DELETE FROM assignment_draft WHERE idx=${req.params.idx}`;
 
-    setTimeout(function () {
-        dbctrl((connection) => {
-            connection.query(sql, (error, results, fields) => {
-                connection.release();
-                if (error) {
-                    res.status(400).json(error);
-                } else res.json(results);
-            });
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) {
+                res.status(400).json(error);
+            } else res.json(results);
         });
-    }, 1000);
+    });
 });
 
 module.exports = router;

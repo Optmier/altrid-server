@@ -75,15 +75,13 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
 
     let sql = `SELECT idx, title, assignment_number, description, time_limit, eyetrack, contents_data, due_date, created FROM assignment_actived WHERE class_number=${classNumber} AND academy_code='${academyCode}' ORDER BY updated desc`;
 
-    setTimeout(function () {
-        dbctrl((connection) => {
-            connection.query(sql, (error, results, fields) => {
-                connection.release();
-                if (error) res.status(400).json(error);
-                else res.json(results);
-            });
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
         });
-    }, 1000);
+    });
 });
 
 /** 특정 actived 과제 완료 */
@@ -100,16 +98,14 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                 WHERE
                     idx = ${idx}`;
 
-    setTimeout(function () {
-        dbctrl((connection) => {
-            connection.query(sql, (error, results, fields) => {
-                connection.release();
-                if (error) {
-                    res.status(400).json(error);
-                } else res.json(results);
-            });
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) {
+                res.status(400).json(error);
+            } else res.json(results);
         });
-    }, 1000);
+    });
 });
 
 /** 특정 actived 과제 삭제 */
