@@ -28,6 +28,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
                 classes.name,
                 classes.description,
                 teachers.name AS teacher_name,
+                max(assignment_actived.due_date) as max_due_date,
                 COUNT(assignment_actived.class_number) AS class_count,
                 (SELECT COUNT(*) FROM students_in_class WHERE classes.idx=students_in_class.class_number AND classes.academy_code=students_in_class.academy_code)
                 AS num_of_students,
@@ -40,7 +41,9 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
             ON classes.teacher_id=teachers.auth_id
             LEFT JOIN assignment_actived AS assignment_actived
             ON classes.idx = assignment_actived.class_number
-            WHERE student_id='${id}' AND students_in_class.academy_code='${academyCode}'`;
+            WHERE student_id='${id}' AND students_in_class.academy_code='${academyCode}'
+            GROUP BY classes.idx
+            ORDER BY max_due_date DESC`;
         else if (userType === 'teachers')
             sql = `SELECT
                         classes.idx,
@@ -108,6 +111,9 @@ router.post('/', useAuthCheck, (req, res, next) => {
 router.get('/class/:class_number', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers' && req.verified.userType !== 'students')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+    const academyCode = req.verified.academyCode;
+    const authId = req.verified.authId;
+    const userType = req.verified.userType;
 
     let sql = `SELECT
                 classes.idx,
@@ -118,6 +124,12 @@ router.get('/class/:class_number', useAuthCheck, (req, res, next) => {
             FROM classes AS classes
             JOIN teachers AS teachers
             ON classes.teacher_id = teachers.auth_id
+            ${
+                userType === 'students'
+                    ? `INNER JOIN students_in_class AS in_class
+            ON in_class.class_number=classes.idx AND in_class.student_id='${authId}'`
+                    : ''
+            }
             WHERE classes.idx=${req.params.class_number}`;
 
     dbctrl((connection) => {

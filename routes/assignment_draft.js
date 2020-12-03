@@ -61,7 +61,9 @@ router.post('/', useAuthCheck, (req, res, next) => {
 
     let sql = `INSERT INTO
                 assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data)
-               VALUES('${academy_code}','${teacher_id}',"${title}","${description}",${time_limit},${eyetrack},${contents_data})`;
+               VALUES('${academy_code}','${teacher_id}','${title.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}','${description
+        .replace(/\\/gi, '\\\\')
+        .replace(/\'/gi, "\\'")}',${time_limit},${eyetrack},${contents_data})`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, result1, fields) => {
@@ -98,8 +100,8 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     let sql = `UPDATE
                     assignment_draft
                 SET
-                    title = "${title}",
-                    description = "${description}",
+                    title = '${title.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
+                    description = '${description.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
                     eyetrack = ${eyetrack},
                     time_limit = ${time_limit},
                     contents_data= ${contents_data}

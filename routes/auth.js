@@ -176,4 +176,10 @@ router.delete('/', (req, res, next) => {
     res.status(204).json();
 });
 
+/** 서버 시간 반환 */
+router.get('/datetime', (req, res, next) => {
+    const currentTime = new Date().getTime();
+    res.json(currentTime);
+});
+
 module.exports = router;
