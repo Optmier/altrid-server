@@ -146,7 +146,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const eyetrack = req.body.eyetrack;
     const studentId = req.verified.authId;
 
-    let sql = `SELECT COUNT(*) AS is_exists, user_data, eyetrack_data, tries, time FROM assignment_result WHERE actived_number=${activedNumber} && student_id='${studentId}'`;
+    let sql = `SELECT COUNT(*) AS is_exists, user_data, eyetrack_data, tries, is_submitted, time FROM assignment_result WHERE actived_number=${activedNumber} && student_id='${studentId}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, res1, fields) => {
             console.log(res1);
@@ -159,8 +159,8 @@ router.post('/', useAuthCheck, (req, res, next) => {
                 res.json({ savedData: res1[0] });
             } else {
                 // insert
-                let insert = `INSERT INTO assignment_result (actived_number, student_id, eyetrack, tries) VALUES (?, ?, ?, ?)`;
-                connection.query(insert, [activedNumber, studentId, eyetrack, 0], (error, res2, fields) => {
+                let insert = `INSERT INTO assignment_result (actived_number, student_id, eyetrack, tries, is_submitted) VALUES (?, ?, ?, ?, ?)`;
+                connection.query(insert, [activedNumber, studentId, eyetrack, 0, 0], (error, res2, fields) => {
                     connection.release();
                     if (error) res.status(400).json(error);
                     else res.status(201).json(res2);

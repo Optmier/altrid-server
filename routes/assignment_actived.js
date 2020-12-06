@@ -78,7 +78,7 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
     let sql = `SELECT actived.idx, actived.title, actived.assignment_number, actived.description, actived.time_limit, actived.eyetrack, actived.contents_data, actived.due_date, actived.created,
                 (SELECT COUNT(*) FROM assignment_result AS result
                 INNER JOIN students_in_class AS in_class
-                ON result.student_id=in_class.student_id AND in_class.class_number=${classNumber}
+                ON result.student_id=in_class.student_id AND in_class.class_number=${classNumber} AND result.tries>0
                 WHERE result.actived_number=actived.idx)
                 AS submitted_number 
                 FROM assignment_actived AS actived

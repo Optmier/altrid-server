@@ -37,7 +37,8 @@ router.get('/:teacher_id', useAuthCheck, (req, res, next) => {
     const teacherId = req.params.teacher_id === 'current' ? req.verified.authId : req.params.teacher_id;
     let sql = `SELECT
     students_in_teacher.student_id ,
-    students.name
+    students.name,
+    students.email
     FROM students_in_teacher AS students_in_teacher
     JOIN students AS students
     ON students_in_teacher.student_id=students.auth_id
