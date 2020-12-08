@@ -159,8 +159,8 @@ router.post('/', useAuthCheck, (req, res, next) => {
                 res.json({ savedData: res1[0] });
             } else {
                 // insert
-                let insert = `INSERT INTO assignment_result (actived_number, student_id, eyetrack, tries, is_submitted) VALUES (?, ?, ?, ?, ?)`;
-                connection.query(insert, [activedNumber, studentId, eyetrack, 0, 0], (error, res2, fields) => {
+                let insert = `INSERT INTO assignment_result (actived_number, student_id, eyetrack, tries, is_submitted, updated) VALUES (?, ?, ?, ?, ?, ?)`;
+                connection.query(insert, [activedNumber, studentId, eyetrack, 0, 0, null], (error, res2, fields) => {
                     connection.release();
                     if (error) res.status(400).json(error);
                     else res.status(201).json(res2);
