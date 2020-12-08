@@ -118,6 +118,28 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     });
 });
 
+/** draft 과제 아이디로 복사 */
+router.post('/copy/:idx', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    const { title } = req.body || '';
+
+    let sql = `INSERT IGNORE INTO 
+        assignment_draft (academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data, file_url)
+        SELECT academy_code, teacher_id, '${title}', description, time_limit, eyetrack, contents_data, file_url
+        FROM assignment_draft WHERE idx=${req.params.idx} ORDER BY idx
+    `;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.status(201).json(results);
+        });
+    });
+});
+
 /** 선생님 id로 draft 과제 삭제 */
 router.delete('/:idx', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers')
