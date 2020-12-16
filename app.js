@@ -22,6 +22,7 @@ const assignmentAdmin = require('./routes/assignment_admin');
 const assignmentActived = require('./routes/assignment_actived');
 const assignmentResult = require('./routes/assignment_result');
 const assignmentReport = require('./routes/assignment_report');
+const datasForAnalytics = require('./routes/datas_for_analytics');
 const others = require('./routes/others');
 
 const secret = require('./configs/encryptionKey').certsPassword;
@@ -78,6 +79,8 @@ app.use('/assignment-report', assignmentReport);
 app.use('/assignment-draft', assignment_draft);
 // assignment actived 과제 관련
 app.use('/assignment-actived', assignmentActived);
+// 분석 데이터 테이블
+app.use('/data-analytics', datasForAnalytics);
 // 기타
 app.use('/others', others);
 
