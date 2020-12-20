@@ -66,21 +66,11 @@ router.post('/', useAuthCheck, (req, res, next) => {
         .replace(/\'/gi, "\\'")}',${time_limit},${eyetrack},${contents_data})`;
 
     dbctrl((connection) => {
-        connection.query(sql, (error, result1, fields) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
             if (error) {
-                connection.release();
                 res.status(400).json(error);
-            } else {
-                let selectIdx = `SELECT LAST_INSERT_ID()`;
-
-                connection.query(selectIdx, (error, result2, fields) => {
-                    connection.release();
-                    if (error) res.status(400).json(error);
-                    else {
-                        res.status(201).json({ result2, academy_code, teacher_id });
-                    }
-                });
-            }
+            } else res.json({ results, academy_code, teacher_id });
         });
     });
 });
@@ -134,8 +124,9 @@ router.post('/copy/:idx', useAuthCheck, (req, res, next) => {
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
-            if (error) res.status(400).json(error);
-            else res.status(201).json(results);
+            if (error) {
+                res.status(400).json(error);
+            } else res.json(results);
         });
     });
 });
