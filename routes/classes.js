@@ -43,7 +43,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
             ON classes.idx = assignment_actived.class_number
             WHERE student_id='${id}' AND students_in_class.academy_code='${academyCode}'
             GROUP BY classes.idx
-            ORDER BY max_due_date DESC`;
+            ORDER BY classes.created desc`;
         else if (userType === 'teachers')
             sql = `SELECT
                         classes.idx,
@@ -77,7 +77,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
                     GROUP BY
                         classes.idx
                     ORDER BY
-                        classes.updated DESC `;
+                        classes.created DESC `;
     }
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
