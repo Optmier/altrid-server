@@ -30,7 +30,7 @@ router.get('/', useAuthCheck, (req, res, next) => {
                 GROUP BY
                     assignment_draft.idx
                 ORDER BY
-                    assignment_draft.updated
+                    assignment_draft.created
                 DESC `;
 
     dbctrl((connection) => {

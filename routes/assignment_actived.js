@@ -88,7 +88,7 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
                 ON in_class.class_number=actived.class_number AND in_class.student_id='${authId}'`
                         : ''
                 }
-                WHERE actived.class_number=${classNumber} AND actived.academy_code='${academyCode}' ORDER BY actived.updated desc`;
+                WHERE actived.class_number=${classNumber} AND actived.academy_code='${academyCode}' ORDER BY actived.created desc`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
