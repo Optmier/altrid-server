@@ -23,6 +23,7 @@ const assignmentActived = require('./routes/assignment_actived');
 const assignmentResult = require('./routes/assignment_result');
 const assignmentReport = require('./routes/assignment_report');
 const datasForAnalytics = require('./routes/datas_for_analytics');
+const gooroomeeMeetingRoom = require('./routes/meeting_room');
 const others = require('./routes/others');
 
 const secret = require('./configs/encryptionKey').certsPassword;
@@ -81,6 +82,8 @@ app.use('/assignment-draft', assignment_draft);
 app.use('/assignment-actived', assignmentActived);
 // 분석 데이터 테이블
 app.use('/data-analytics', datasForAnalytics);
+//Gooroomee apis
+app.use('/meeting-room', gooroomeeMeetingRoom);
 // 기타
 app.use('/others', others);
 

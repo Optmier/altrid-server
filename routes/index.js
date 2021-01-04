@@ -15,36 +15,30 @@ const dbconfig = require('../configs/dbconfig');
 const { verifyToken } = require('../modules/encryption');
 const socketIO = require('socket.io');
 router.io = socketIO();
-const rtcUsers = {};
+const io_vidLecture = router.io.of('/vid_lecture');
 
-router.io.on('connection', (socket) => {
-    if (!rtcUsers[socket.id]) {
-        rtcUsers[socket.id] = socket.id;
-    }
-
-    socket.emit('yourId', socket.id);
-
-    socket.on('changeId', (changedId) => {
-        rtcUsers[socket.id] = changedId;
-        console.log(changedId, rtcUsers);
-        router.io.sockets.emit('allUsers', rtcUsers);
+io_vidLecture.on('connection', (socket) => {
+    console.log('connected!');
+    socket.emit('connected', socket.id);
+    socket.on('join', (groupId) => {
+        console.log('joined >> ' + groupId);
+        try {
+            socket.join(groupId);
+            io_vidLecture.to(groupId).emit('joined', 'joined on ' + groupId);
+        } catch (error) {
+            socket.emit('onError', error);
+        }
     });
-
-    router.io.sockets.emit('allUsers', rtcUsers);
-
-    socket.on('callUser', (data) => {
-        router.io.to(data.userToCall).emit('hey', {
-            signal: data.signalData,
-            from: data.from,
-        });
+    socket.on('detectEyetrack', ({ groupId, data }) => {
+        console.log(groupId, data);
+        io_vidLecture.to(groupId).emit('eyetrackFeedback', data);
     });
-
-    socket.on('acceptCall', (data) => {
-        router.io.to(data.to).emit('callAccepted', data.signal);
+    socket.on('leave', (groupId) => {
+        console.log('leaved >> ' + groupId);
+        socket.leave(groupId);
     });
-
     socket.on('disconnect', () => {
-        delete rtcUsers[socket.id];
+        console.log('disconneted');
     });
 });
 
