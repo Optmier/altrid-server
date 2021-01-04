@@ -95,11 +95,16 @@ router.post('/', useAuthCheck, (req, res, next) => {
 
     const name = req.body.name;
     const description = req.body.description;
+    const days = req.body.days;
     const teacherId = req.verified.authId;
     const academyCode = req.verified.academyCode;
-    let sql = 'INSERT INTO classes (name, description, teacher_id, academy_code) VALUES (?, ?, ?, ?)';
+    let sql = `INSERT INTO 
+                classes (name, description, class_day, teacher_id, academy_code) 
+                VALUES ('${name}', '${description}', '${days}', '${teacherId}', '${academyCode}')`;
+
+    console.log(sql);
     dbctrl((connection) => {
-        connection.query(sql, [name, description, teacherId, academyCode], (error, results, fields) => {
+        connection.query(sql, (error, results, fields) => {
             connection.release();
             if (error) res.status(400).json(error);
             else res.status(201).json(results);
