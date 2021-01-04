@@ -27,6 +27,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
                 classes.idx,
                 classes.name,
                 classes.description,
+                classes.class_day,
                 teachers.name AS teacher_name,
                 max(assignment_actived.due_date) as max_due_date,
                 COUNT(assignment_actived.class_number) AS class_count,
@@ -49,6 +50,7 @@ router.get('/:code', useAuthCheck, (req, res, next) => {
                         classes.idx,
                         classes.name,
                         classes.description,
+                        classes.class_day,
                         teachers.name AS teacher_name,
                         max(assignment_actived.due_date) as max_due_date,
                         COUNT(assignment_actived.class_number) AS class_count,
@@ -96,11 +98,12 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const name = req.body.name;
     const description = req.body.description;
     const days = req.body.days;
+    const class_code = req.body.class_code;
     const teacherId = req.verified.authId;
     const academyCode = req.verified.academyCode;
     let sql = `INSERT INTO 
-                classes (name, description, class_day, teacher_id, academy_code) 
-                VALUES ('${name}', '${description}', '${days}', '${teacherId}', '${academyCode}')`;
+                classes (name, description, class_day, class_code, teacher_id, academy_code) 
+                VALUES ('${name}', '${description}', '${days}', '${class_code}', '${teacherId}', '${academyCode}')`;
 
     console.log(sql);
     dbctrl((connection) => {
@@ -125,6 +128,8 @@ router.get('/class/:class_number', useAuthCheck, (req, res, next) => {
                 classes.name as class_name,
                 classes.description,
                 classes.teacher_id,
+                classes.class_day,
+                classes.class_code,
                 teachers.name as teacher_name
             FROM classes AS classes
             JOIN teachers AS teachers
@@ -153,7 +158,7 @@ router.patch('/:class', useAuthCheck, (req, res, next) => {
 
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
-    const { name, description } = req.body;
+    const { name, description, class_day } = req.body;
     const idx = req.params.class;
 
     let sql = `UPDATE
@@ -162,6 +167,7 @@ router.patch('/:class', useAuthCheck, (req, res, next) => {
                     name = "${name}",
                     description = "${description}",
                     teacher_id = "${teacher_id}",
+                    class_day = "${class_day}",
                     academy_code = "${academy_code}"
                 WHERE
                     idx = ${idx}`;
