@@ -186,9 +186,10 @@ router.get('/log', useAuthCheck, (req, res, next) => {
 
 // 미팅룸 참여자 입/퇴장 이력
 router.get('/log/users', useAuthCheck, (req, res, next) => {
-    const type = req.params.type || 'roomId';
-    const roomIds = req.params.roomId || [];
-    const date = req.params.date || new Date().format('yyyymmdd');
+    const type = req.query.type || 'roomId';
+    const roomIds = req.query.roomId || '';
+    const date = req.query.date || new Date().format('yyyyMMdd');
+    console.log(roomIds);
     Axios.get(`${apiServer}/log/room/roomUser`, {
         params: {
             type: type,
@@ -196,7 +197,6 @@ router.get('/log/users', useAuthCheck, (req, res, next) => {
             date: date,
         },
         headers: GOOROOMEE_HEADERS,
-        withCredentials: true,
     })
         .then((r) => {
             const resultCode = r.data.resultCode;
@@ -213,6 +213,51 @@ router.get('/live-counts', useAuthCheck, (req, res, next) => {
         .then((r) => {
             const resultCode = r.data.resultCode;
             res.status(standardStatusCode(resultCode, 200)).json(r.data);
+        })
+        .catch((e) => {
+            res.status(e.response.status).json(e);
+        });
+});
+
+// 방 별 실시간 접속자 수
+router.get('/live-counts/:room_id', useAuthCheck, (req, res, next) => {
+    const type = 'roomId';
+    const roomIds = req.params.room_id || '';
+    const date = new Date().format('yyyyMMdd');
+    Axios.get(`${apiServer}/log/room/roomUser`, {
+        params: {
+            type: type,
+            roomId: roomIds,
+            date: date,
+        },
+        headers: GOOROOMEE_HEADERS,
+    })
+        .then((r) => {
+            const _o = {};
+            const resultCode = r.data.resultCode;
+            if (resultCode !== 'GRM_200') {
+                res.status(standardStatusCode(resultCode, 200)).json(r.data);
+                return;
+            }
+            const logs = r.data.data.logList[0].logs;
+            logs.forEach(({ apiUserId, logType }, i) => {
+                switch (logType) {
+                    case 'join':
+                        _o[apiUserId] = 1;
+                        return;
+                    case 'leave':
+                        _o[apiUserId] = 0;
+                        return;
+                    default:
+                        _o[apiUserId] = 0;
+                        return;
+                }
+            });
+            let counts = 0;
+            Object.keys(_o).forEach((key) => {
+                counts += _o[key];
+            });
+            res.json(counts);
         })
         .catch((e) => {
             res.status(e.response.status).json(e);
