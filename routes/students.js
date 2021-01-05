@@ -158,6 +158,22 @@ router.patch('/:id', useAuthCheck, (req, res, next) => {
     });
 });
 
+/** 특정 학원생 academy code update */
+router.put('/academy-code', useAuthCheck, (req, res, next) => {
+    const authId = req.verified.authId;
+    const academyCode = req.body.academyCode;
+
+    let sql = `UPDATE students SET academy_code="${academyCode}" WHERE auth_id="${authId}"`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 /** 특정 학원생 삭제 (usertype이 student인 경우에는 자기 자신만 삭제 가능) */
 router.delete('/:id', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'students' || req.verified.userType !== 'teachers' || req.verified.userType !== 'admins')

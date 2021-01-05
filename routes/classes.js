@@ -151,6 +151,22 @@ router.get('/class/:class_number', useAuthCheck, (req, res, next) => {
     });
 });
 
+/**클래스 코드로  클래스 존재 여부 */
+router.get('/class-code/:class_code', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'students')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    let sql = `SELECT COUNT(*) AS is_exists, idx, academy_code FROM classes WHERE class_code='${req.params.class_code}'`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 /** class 정보 수정 */
 router.patch('/:class', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers')

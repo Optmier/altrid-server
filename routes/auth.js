@@ -142,7 +142,11 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
 /** 인증 토큰 재발급 */
 router.patch('/', useAuthCheck, (req, res, next) => {
-    const { authId, userName, userType, academyCode } = req.verified;
+    const { authId, userName, userType } = req.verified;
+    let { academyCode } = req.verified;
+
+    req.body ? (academyCode = req.body.academyCode) : '';
+
     tasksAuthLoginAfterCheck({
         authId: authId,
         name: userName,

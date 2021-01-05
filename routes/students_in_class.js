@@ -47,16 +47,26 @@ router.get('/:class_number', useAuthCheck, (req, res, next) => {
 
 /** 클래스에 학생 목록 추가 */
 router.post('/', useAuthCheck, (req, res, next) => {
-    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
-        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+    const class_number = req.body.class_number;
+    const student_id = req.body.student_id;
+    const class_code = req.body.class_code;
+    const academy_code = req.body.academy_code;
 
-    const classNumber = req.body.classNumber;
-    const academyCode = req.verified.academyCode;
-    const students = req.body.students.map((data) => [classNumber, academyCode, data.student_id]);
-    let sql = 'INSERT INTO students_in_class (class_number, academy_code, student_id) VALUES ?';
+    let sql = `INSERT INTO
+                students_in_class(
+                        class_number,
+                        student_id,
+                        class_code,
+                        academy_code
+                    )
+                VALUES(
+                    '${class_number}',
+                    '${student_id}',
+                    '${class_code}',
+                    '${academy_code}')`;
 
     dbctrl((connection) => {
-        connection.query(sql, [students], (error, results, fields) => {
+        connection.query(sql, (error, results, fields) => {
             connection.release();
             if (error) res.status(400).json(error);
             else res.status(201).json(results);
