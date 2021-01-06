@@ -90,4 +90,21 @@ router.delete('/:class', useAuthCheck, (req, res, next) => {
     });
 });
 
+/** 특정 클래스 학생 여러명 삭제 */
+router.delete('/students/:class_number', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    let sql = `DELETE FROM students_in_class
+             WHERE class_number='${req.params.class_number}' and student_id IN(${req.body.students})`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.status(204).json(results);
+        });
+    });
+});
+
 module.exports = router;

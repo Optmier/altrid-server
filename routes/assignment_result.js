@@ -2,6 +2,31 @@ var express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
+/** 수강생 관리를 위한 데이터 가져오기*/
+router.get('/report-students/:class_number', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    let sql = `SELECT sic.class_number, sic.student_id, s.name, a.title, a.idx AS actived_number, r.idx
+                FROM students_in_class AS sic
+                INNER JOIN students AS s
+                ON sic.student_id = s.auth_id
+                INNER JOIN assignment_actived AS a
+                ON sic.class_number = a.class_number
+                LEFT JOIN assignment_result AS r
+                ON (sic.student_id = r.student_id AND a.idx = r.actived_number)
+                WHERE sic.class_number = ${req.params.class_number}
+                ORDER BY s.name desc, a.idx`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 /** 보고서를 위한 데이터 가져오기 */
 router.get('/:actived_number', useAuthCheck, (req, res, next) => {
     const academyCode = req.verified.academyCode;
