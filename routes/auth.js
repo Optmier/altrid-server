@@ -145,8 +145,9 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     const { authId, userName, userType } = req.verified;
     let { academyCode } = req.verified;
 
-    req.body ? (academyCode = req.body.academyCode) : '';
+    req.body.academyCode ? (academyCode = req.body.academyCode) : '';
 
+    console.log(req.body);
     tasksAuthLoginAfterCheck({
         authId: authId,
         name: userName,
