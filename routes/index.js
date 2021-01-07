@@ -15,38 +15,7 @@ const dbconfig = require('../configs/dbconfig');
 const { verifyToken } = require('../modules/encryption');
 const socketIO = require('socket.io');
 router.io = socketIO();
-const rtcUsers = {};
-
-router.io.on('connection', (socket) => {
-    if (!rtcUsers[socket.id]) {
-        rtcUsers[socket.id] = socket.id;
-    }
-
-    socket.emit('yourId', socket.id);
-
-    socket.on('changeId', (changedId) => {
-        rtcUsers[socket.id] = changedId;
-        console.log(changedId, rtcUsers);
-        router.io.sockets.emit('allUsers', rtcUsers);
-    });
-
-    router.io.sockets.emit('allUsers', rtcUsers);
-
-    socket.on('callUser', (data) => {
-        router.io.to(data.userToCall).emit('hey', {
-            signal: data.signalData,
-            from: data.from,
-        });
-    });
-
-    socket.on('acceptCall', (data) => {
-        router.io.to(data.to).emit('callAccepted', data.signal);
-    });
-
-    socket.on('disconnect', () => {
-        delete rtcUsers[socket.id];
-    });
-});
+const io_vidLecture = router.io.of('/vid_lecture');
 
 const dbPool = mysql.createPool(dbconfig);
 global.dbctrl = (callback) => {
@@ -58,6 +27,32 @@ global.dbctrl = (callback) => {
         }
     });
 };
+
+io_vidLecture.on('connection', (socket) => {
+    console.log('connected!');
+    socket.emit('connected', socket.id);
+    socket.on('join', ({ groupId, data }) => {
+        console.log('joined >> ', { groupId, data });
+        try {
+            socket.join(groupId);
+            io_vidLecture.to(groupId).emit('joined', data);
+        } catch (error) {
+            socket.emit('onError', error);
+        }
+    });
+    socket.on('detectEyetrack', ({ groupId, data }) => {
+        console.log(groupId, data);
+        io_vidLecture.to(groupId).emit('eyetrackFeedback', data);
+    });
+    socket.on('leave', ({ groupId, data }) => {
+        console.log('leaved >> ', { groupId, data });
+        io_vidLecture.to(groupId).emit('leaved', data);
+        socket.leave(groupId);
+    });
+    socket.on('disconnect', () => {
+        console.log('disconneted');
+    });
+});
 
 /* GET home page. */
 router.get('/', function (req, res, next) {

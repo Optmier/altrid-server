@@ -18,7 +18,7 @@ const useAuthCheck = (req, res, next) => {
         next();
     } else {
         return res.status(403).json({
-            code: tokenVerified.error.code,
+            code: tokenVerified.error.code ? tokenVerified.error.code : 'unknown',
             message: 'unauthorized-access :: ' + tokenVerified.error.message,
         });
     }

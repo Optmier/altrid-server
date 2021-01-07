@@ -9,6 +9,7 @@ var path = require('path');
 var debug = require('debug')('eduityonline-node:server');
 var fs = require('fs');
 const certsPassword = require('../configs/encryptionKey').certsPassword;
+const whitelists = require('../configs/whitelists');
 let http, https, options, server;
 const io = app.io;
 
@@ -40,7 +41,12 @@ if (process.env.RUN_MODE === 'dev') {
     server = https.createServer(options, app);
 }
 
-io.attach(server);
+io.attach(server, {
+    cors: {
+        origin: whitelists,
+        withCredentials: true,
+    },
+});
 
 /**
  * Listen on provided port, on all network interfaces.
