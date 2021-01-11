@@ -11,7 +11,7 @@ router.get('/report-students/:class_number', useAuthCheck, (req, res, next) => {
                 FROM students_in_class AS sic
                 INNER JOIN students AS s
                 ON sic.student_id = s.auth_id
-                INNER JOIN assignment_actived AS a
+                LEFT JOIN assignment_actived AS a
                 ON sic.class_number = a.class_number
                 LEFT JOIN assignment_result AS r
                 ON (sic.student_id = r.student_id AND a.idx = r.actived_number)
