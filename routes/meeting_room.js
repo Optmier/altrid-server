@@ -39,6 +39,7 @@ const toTimestamp = (isoDateStr) => {
 // 미팅룸 개설
 router.post('/', useAuthCheck, (req, res, next) => {
     const roomTitle = req.body.roomTitle || 'Untitled';
+    const roomType = req.body.roomType || 'edu';
     const roomUrlId = req.body.roomUrlId;
     const liveMode = req.body.liveMode || false;
     const maxJoinCount = req.body.maxJoinCount;
@@ -61,6 +62,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
             headers: GOOROOMEE_HEADERS,
             params: {
                 roomTitle: roomTitle,
+                roomType: roomType,
                 roomUrlId: roomUrlId,
                 liveMode: liveMode,
                 maxJoinCount: maxJoinCount,
