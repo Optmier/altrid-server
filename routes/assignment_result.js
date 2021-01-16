@@ -44,6 +44,32 @@ router.get('/eyetrack-data/:actived_number', useAuthCheck, (req, res, next) => {
     });
 });
 
+/** 현 과제 컨텐츠 데이터 가져오기 */
+router.get('/contents-data/:actived_number', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+    const activedNumber = req.params.actived_number;
+    const classNumber = req.query.classNumber;
+
+    let sql = `SELECT actived.contents_data
+    FROM students_in_class AS in_class
+    LEFT JOIN students
+    ON in_class.student_id=students.auth_id AND in_class.academy_code=students.academy_code
+    JOIN assignment_actived AS actived
+    ON in_class.class_number=actived.class_number
+    LEFT JOIN assignment_result AS result
+    ON actived.idx=result.actived_number AND students.auth_id=result.student_id
+    WHERE in_class.academy_code='${academyCode}' AND (actived.idx=(SELECT MAX(idx) FROM assignment_actived WHERE idx<${activedNumber} AND academy_code='${academyCode}' AND class_number=${classNumber}) OR actived.idx=${activedNumber})`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else {
+                res.json(results[0]);
+            }
+        });
+    });
+});
+
 /** 보고서를 위한 데이터 가져오기 */
 router.get('/:actived_number', useAuthCheck, (req, res, next) => {
     const academyCode = req.verified.academyCode;
@@ -62,7 +88,7 @@ router.get('/:actived_number', useAuthCheck, (req, res, next) => {
         ON actived.idx=result.actived_number AND students.auth_id=result.student_id
         WHERE in_class.academy_code='${academyCode}' AND actived.idx=${activedNumber}`;
     else
-        sql = `SELECT actived.idx AS actived_number, students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number AS submitted, result.score_percentage, result.score_points, result.eyetrack, result.user_data, actived.contents_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
+        sql = `SELECT actived.idx AS actived_number, students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number AS submitted, result.score_percentage, result.score_points, result.eyetrack, result.user_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
         FROM students_in_class AS in_class
         LEFT JOIN students
         ON in_class.student_id=students.auth_id AND in_class.academy_code=students.academy_code
