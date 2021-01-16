@@ -88,7 +88,7 @@ router.get('/:actived_number', useAuthCheck, (req, res, next) => {
         ON actived.idx=result.actived_number AND students.auth_id=result.student_id
         WHERE in_class.academy_code='${academyCode}' AND actived.idx=${activedNumber}`;
     else
-        sql = `SELECT actived.idx AS actived_number, students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number AS submitted, result.score_percentage, result.score_points, result.eyetrack, result.user_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
+        sql = `SELECT actived.idx AS actived_number, students.name, students.auth_id AS student_id, actived.teacher_id, result.actived_number AS submitted, actived.contents_data, result.score_percentage, result.score_points, result.eyetrack, result.user_data, result.num_of_fixs, result.avg_of_fix_durs, result.avg_of_fix_vels, result.num_of_sacs, result.var_of_sac_vels, result.cluster_area, result.cluster_counts, result.num_of_regs, result.tries, result.time, result.created, result.updated
         FROM students_in_class AS in_class
         LEFT JOIN students
         ON in_class.student_id=students.auth_id AND in_class.academy_code=students.academy_code
