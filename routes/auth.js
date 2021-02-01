@@ -61,7 +61,6 @@ const tasksAuthLoginAfterCheck = (data) => {
 };
 
 const tasksAuthLoginFailed = (error) => {
-    console.log('results fail!!');
     error.res.status(403).json({ ...error, res: null });
 };
 
@@ -140,14 +139,14 @@ router.delete('/temp', (req, res, next) => {
 
 /** 인증 토큰 유효 여부 확인 */
 router.get('/', useAuthCheck, (req, res, next) => {
-    console.log(req.verified);
+    console.log('session : ', req.verified);
     // delete req.verified.authId;
     res.json(req.verified);
 });
 
 /** 인증 토큰 재발급 */
 router.patch('/', useAuthCheck, (req, res, next) => {
-    const { authId, userName, userType } = req.verified;
+    const { authId, userName, userType, image } = req.verified;
     let { academyCode } = req.verified;
 
     req.body.academyCode ? (academyCode = req.body.academyCode) : '';
@@ -158,6 +157,7 @@ router.patch('/', useAuthCheck, (req, res, next) => {
         name: userName,
         userType: userType,
         academyCode: academyCode,
+        image: image,
         res: res,
     });
 });

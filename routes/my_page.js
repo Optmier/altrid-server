@@ -3,13 +3,12 @@ const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
 /** 프로필 조회 */
-router.get('/profile', useAuthCheck, (req, res, next) => {
+router.get('/profile/:userType', useAuthCheck, (req, res, next) => {
     const authId = req.verified.authId;
-
-    console.log(req.verified.image);
+    const userType = req.params.userType;
 
     const sql = `select t.auth_id, t.email, t.name, t.auth_with, t.academy_code, a.name as academy_name
-                from teachers as t
+                from ${userType} as t
                 left join academies as a
                 on t.academy_code = a.code
                 where t.auth_id = "${authId}"`;
