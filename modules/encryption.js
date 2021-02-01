@@ -53,9 +53,9 @@ const verifyPassword = (password, comparePassword, salt, keyLength = 64, options
  * @param {*} expiresIn 만료 시간(기본 10분)
  * @param {*} options 옵션
  */
-const issueToken = (email, username, usertype = 'customer', academyCode = '', issuer, expiresIn = '10m', options = {}) => {
+const issueToken = (email, username, usertype = 'customer', image = '', academyCode = '', issuer, expiresIn = '10m', options = {}) => {
     const token = jwt.sign(
-        { authId: encryptTokenUserData(email), userName: username, userType: usertype, academyCode: academyCode },
+        { authId: encryptTokenUserData(email), userName: username, userType: usertype, image: image, academyCode: academyCode },
         jwtSecret,
         {
             expiresIn: expiresIn,

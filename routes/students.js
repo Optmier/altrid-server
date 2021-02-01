@@ -73,10 +73,10 @@ router.get('/exists/:id', (req, res, next) => {
 
 /** 학원생 추가 */
 router.post('/', (req, res, next) => {
-    const { email, name, authId, authWith, academyCode, phone } = req.body;
-    let sql = `INSERT INTO students (email, name, auth_id, auth_with, academy_code, phone) VALUES (?, ?, ?, ?, ?, ?)`;
+    const { email, name, authId, authWith, academyCode, phone, image } = req.body;
+    let sql = `INSERT INTO students (email, name, auth_id, auth_with, academy_code, phone, image) VALUES (?, ?, ?, ?, ?, ?, ?)`;
     dbctrl((connection) => {
-        connection.query(sql, [email, name, authId, authWith, academyCode, phone], (error, results, fields) => {
+        connection.query(sql, [email, name, authId, authWith, academyCode, phone, image], (error, results, fields) => {
             connection.release();
             if (error) res.status(400).json(error);
             else res.status(201).json(results);

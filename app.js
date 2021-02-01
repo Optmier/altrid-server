@@ -24,8 +24,8 @@ const assignmentResult = require('./routes/assignment_result');
 const assignmentReport = require('./routes/assignment_report');
 const datasForAnalytics = require('./routes/datas_for_analytics');
 const gooroomeeMeetingRoom = require('./routes/meeting_room');
+const myPage = require('./routes/my_page');
 const others = require('./routes/others');
-
 const secret = require('./configs/encryptionKey').certsPassword;
 
 var app = express();
@@ -84,6 +84,8 @@ app.use('/assignment-actived', assignmentActived);
 app.use('/data-analytics', datasForAnalytics);
 //Gooroomee apis
 app.use('/meeting-room', gooroomeeMeetingRoom);
+// 마이 페이지
+app.use('/my-page', myPage);
 // 기타
 app.use('/others', others);
 

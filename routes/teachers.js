@@ -98,10 +98,10 @@ router.get('/in-class/:code/:teacher_id', useAuthCheck, (req, res, next) => {
 
 /** 선생님 추가 */
 router.post('/', (req, res, next) => {
-    const { email, name, authId, authWith, academyCode, phone, approved } = req.body;
-    let sql = `INSERT INTO teachers (email, name, auth_id, auth_with, academy_code, phone, approved) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const { email, name, authId, authWith, academyCode, phone, approved, image } = req.body;
+    let sql = `INSERT INTO teachers (email, name, auth_id, auth_with, academy_code, phone, approved, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     dbctrl((connection) => {
-        connection.query(sql, [email, name, authId, authWith, academyCode, phone, approved], (error, results, fields) => {
+        connection.query(sql, [email, name, authId, authWith, academyCode, phone, approved, image], (error, results, fields) => {
             connection.release();
             if (error) res.status(400).json(error);
             else res.status(201).json(results);
