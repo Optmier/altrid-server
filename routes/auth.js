@@ -146,12 +146,13 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
 /** 인증 토큰 재발급 */
 router.patch('/', useAuthCheck, (req, res, next) => {
-    const { authId, userName, userType, image } = req.verified;
-    let { academyCode } = req.verified;
+    const { authId, userName, userType } = req.verified; // session중 update 되지 않는 데이터
+    let { academyCode, image } = req.verified; // session중 update되는 데이터
 
-    req.body.academyCode ? (academyCode = req.body.academyCode) : '';
+    req.body.academyCode ? (academyCode = req.body.academyCode) : null;
+    req.body.image ? (image = req.body.image) : null;
 
-    console.log(req.body);
+    console.log('body!!', req.body);
     tasksAuthLoginAfterCheck({
         authId: authId,
         name: userName,

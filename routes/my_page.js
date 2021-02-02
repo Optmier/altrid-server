@@ -3,9 +3,9 @@ const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
 /** 프로필 조회 */
-router.get('/profile/:userType', useAuthCheck, (req, res, next) => {
+router.get('/profile', useAuthCheck, (req, res, next) => {
     const authId = req.verified.authId;
-    const userType = req.params.userType;
+    const userType = req.verified.userType;
 
     const sql = `select t.auth_id, t.email, t.name, t.auth_with, t.academy_code, a.name as academy_name
                 from ${userType} as t
@@ -25,9 +25,10 @@ router.get('/profile/:userType', useAuthCheck, (req, res, next) => {
 /** 프로필 수정 */
 router.put('/profile', useAuthCheck, (req, res, next) => {
     const authId = req.verified.authId;
+    const userType = req.verified.userType;
     const name = req.body.name;
 
-    const sql = `update teachers
+    const sql = `update ${userType}
                     set name="${name}"
                     where auth_id="${authId}"`;
 
