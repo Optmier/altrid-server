@@ -38,7 +38,7 @@ const toTimestamp = (isoDateStr) => {
 
 // 미팅룸 개설
 router.post('/', useAuthCheck, (req, res, next) => {
-    const roomTitle = req.body.roomTitle || 'Untitled';
+    const roomTitle = req.body.roomTitle.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'") || 'Untitled';
     const roomType = req.body.roomType || 'edu';
     const roomUrlId = req.body.roomUrlId;
     const liveMode = req.body.liveMode || false;
@@ -49,7 +49,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const endDate = req.body.endDate;
     const durationMinutes = req.body.durationMinutes;
 
-    const description = req.body.description || '';
+    const description = req.body.description.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'") || '';
     const classNumber = req.body.classNumber || 0;
     const eyetrack = req.body.eyetrack || false;
 
@@ -266,9 +266,45 @@ router.get('/live-counts/:room_id', useAuthCheck, (req, res, next) => {
         });
 });
 
+// 미팅룸들(여러개) 종료
+router.delete('/', useAuthCheck, (req, res, next) => {
+    const roomIds = req.query.roomIds;
+    // 데이터베이스에서 강제 폐쇄
+    let sql = `DELETE FROM video_lectures WHERE room_id in (${roomIds.map((d) => `'${d}'`)})`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.status(204).json(results);
+        });
+    });
+    roomIds.forEach((roomId) =>
+        Axios.delete(`${apiServer}/room/${roomId}`, { headers: GOOROOMEE_HEADERS })
+            .then((r) => {
+                const resultCode = r.data.resultCode;
+                if (resultCode !== 'GRM_200') {
+                    res.status(standardStatusCode(resultCode, 204)).json(r.data);
+                    return;
+                }
+            })
+            .catch((e) => {
+                res.status(e.response.status).json(e);
+            }),
+    );
+});
+
 // 미팅룸 종료
 router.delete('/:room_id', useAuthCheck, (req, res, next) => {
     const roomId = req.params['room_id'];
+    // 데이터베이스에서 강제 폐쇄
+    let sql = `UPDATE video_lectures SET force_closed=1 WHERE room_id='${roomId}'`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.status(204).json(results);
+        });
+    });
     Axios.delete(`${apiServer}/room/${roomId}`, { headers: GOOROOMEE_HEADERS })
         .then((r) => {
             const resultCode = r.data.resultCode;
@@ -276,15 +312,6 @@ router.delete('/:room_id', useAuthCheck, (req, res, next) => {
                 res.status(standardStatusCode(resultCode, 204)).json(r.data);
                 return;
             }
-            // 데이터베이스에서 지우기
-            let sql = `DELETE FROM video_lectures WHERE room_id='${roomId}'`;
-            dbctrl((connection) => {
-                connection.query(sql, (error, results, fields) => {
-                    connection.release();
-                    if (error) res.status(400).json(error);
-                    else res.status(204).json(results);
-                });
-            });
         })
         .catch((e) => {
             res.status(e.response.status).json(e);
