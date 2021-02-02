@@ -44,6 +44,24 @@ router.post('/requests-contents/:idx', [useAuthCheck, uploadContentsRequests.any
     });
 });
 
+/** 프로필 이미지 저장 */
+router.post('/requests-image', [useAuthCheck, uploadContentsRequests.any()], (req, res, next) => {
+    const authId = req.verified.authId;
+    const userType = req.verified.userType;
+
+    if (!req.files) return res.status(400).json({ code: 'no-files', message: 'No files' });
+
+    let sql = `UPDATE ${userType} SET image='requests-contents/${req.files[0].filename}' WHERE auth_id="${authId}"`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json({ ...results, file_name: 'requests-contents/' + req.files[0].filename });
+        });
+    });
+});
+
 /** 컨텐츠 요청 첨부파일 보기 */
 router.get('/requests-contents/*', useAuthCheck, (req, res, next) => {
     const file = decodeURI(path.join(dirContentsRequests, req.path.replace('/requests-contents', '')));
