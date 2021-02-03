@@ -27,7 +27,7 @@ const tasksAuthLoginCheckDatabase = (res, authId, email, userType) =>
                     reject({ ...error, res: res });
                 } else {
                     if (results[0].is_exists > 0 && results[0].approved) {
-                        console.log('results!!', results[0]);
+                        // console.log('results!!', results[0]);
 
                         resolve({
                             authId: email || authId,
@@ -139,20 +139,20 @@ router.delete('/temp', (req, res, next) => {
 
 /** 인증 토큰 유효 여부 확인 */
 router.get('/', useAuthCheck, (req, res, next) => {
-    console.log('session : ', req.verified);
+    // console.log('session : ', req.verified);
     // delete req.verified.authId;
     res.json(req.verified);
 });
 
 /** 인증 토큰 재발급 */
 router.patch('/', useAuthCheck, (req, res, next) => {
-    const { authId, userName, userType } = req.verified; // session중 update 되지 않는 데이터
-    let { academyCode, image } = req.verified; // session중 update되는 데이터
+    const { authId, userType } = req.verified; // session중 update 되지 않는 데이터
+    let { academyCode, image, userName } = req.verified; // session중 update되는 데이터
 
     req.body.academyCode ? (academyCode = req.body.academyCode) : null;
-    req.body.image ? (image = req.body.image) : null;
+    req.body.image ? (image = req.body.image) : (image = null);
+    req.body.userName ? (userName = req.body.userName) : null;
 
-    console.log('body!!', req.body);
     tasksAuthLoginAfterCheck({
         authId: authId,
         name: userName,

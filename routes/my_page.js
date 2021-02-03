@@ -7,7 +7,7 @@ router.get('/profile', useAuthCheck, (req, res, next) => {
     const authId = req.verified.authId;
     const userType = req.verified.userType;
 
-    const sql = `select t.auth_id, t.email, t.name, t.auth_with, t.academy_code, a.name as academy_name
+    const sql = `select t.email, t.auth_with
                 from ${userType} as t
                 left join academies as a
                 on t.academy_code = a.code
@@ -27,9 +27,10 @@ router.put('/profile', useAuthCheck, (req, res, next) => {
     const authId = req.verified.authId;
     const userType = req.verified.userType;
     const name = req.body.name;
+    const image = req.body.image;
 
     const sql = `update ${userType}
-                    set name="${name}"
+                    set name="${name}", image=${!image ? null : '"' + image + '"'}
                     where auth_id="${authId}"`;
 
     dbctrl((connection) => {
