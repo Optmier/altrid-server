@@ -43,4 +43,20 @@ router.put('/profile', useAuthCheck, (req, res, next) => {
     });
 });
 
+router.delete('/profile', useAuthCheck, (req, res, next) => {
+    const authId = req.verified.authId;
+    const userType = req.verified.userType;
+
+    const sql = `delete from ${userType} where auth_id="${authId}"`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) {
+                res.status(400).json(error);
+            } else res.json(results);
+        });
+    });
+});
+
 module.exports = router;
