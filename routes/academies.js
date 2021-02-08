@@ -1,5 +1,6 @@
 var express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
+const { route } = require('./students_in_teacher');
 var router = express.Router();
 
 /** 모든 계약 학원 조회 */
@@ -71,15 +72,27 @@ router.get('/exists/:code', (req, res, next) => {
     });
 });
 
-/** 계약 학원 추가 */
-router.post('/', useAuthCheck, (req, res, next) => {
-    if (req.verified.userType !== 'admin')
-        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
-
-    const { code, name, address, email, phone, numOfStudents } = req.body;
-    let sql = `INSERT INTO academies (code, name, email, phone, num_of_students) VALUES (?, ?, ?, ?, ?, ?)`;
+/** 학원 중복 이름 체크 */
+router.get('/exists-name/:name', (req, res, next) => {
+    let sql = `SELECT COUNT(*) as is_exists FROM academies WHERE name='${req.params.name}'`;
     dbctrl((connection) => {
-        connection.query(sql, [code, name, address, email, phone, numOfStudents], (error, results, fields) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results[0]);
+        });
+    });
+});
+
+/** 계약 학원 추가 */
+router.post('/', (req, res, next) => {
+    // if (req.verified.userType !== 'temp' && req.verified.userType !== 'admins')
+    //     return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    const { code, name, address, email, phone, numOfStudents, numOfTeachers } = req.body;
+    let sql = `INSERT INTO academies (code, name, email, address, phone, num_of_students, num_of_teachers) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    dbctrl((connection) => {
+        connection.query(sql, [code, name, address, email, phone, numOfStudents, numOfTeachers], (error, results, fields) => {
             connection.release();
             if (error) res.status(400).json(error);
             else res.status(201).json(results);
