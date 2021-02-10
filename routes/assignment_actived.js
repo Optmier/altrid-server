@@ -75,7 +75,8 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
     const authId = req.verified.authId;
     const userType = req.verified.userType;
 
-    let sql = `SELECT actived.idx, actived.title, actived.assignment_number, actived.description, actived.time_limit, actived.eyetrack, actived.contents_data, actived.due_date, actived.created,
+    let sql = `SELECT actived.idx, actived.title, actived.assignment_number, actived.description, actived.time_limit, actived.eyetrack, actived.contents_data, actived.due_date, actived.created, 
+    ${userType === 'students' ? 'result.is_submitted,' : ''}
                 (SELECT COUNT(*) FROM assignment_result AS result
                 INNER JOIN students_in_class AS in_class
                 ON result.student_id=in_class.student_id AND in_class.class_number=${classNumber} AND result.tries>0
@@ -84,11 +85,12 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
                 FROM assignment_actived AS actived
                 ${
                     userType === 'students'
-                        ? `INNER JOIN students_in_class AS in_class
-                ON in_class.class_number=actived.class_number AND in_class.student_id='${authId}'`
+                        ? `INNER JOIN students_in_class AS in_class ON in_class.class_number=actived.class_number AND in_class.student_id='${authId}'
+                           LEFT JOIN assignment_result AS result ON actived.idx =result.actived_number AND result.student_id = '${authId}'`
                         : ''
                 }
                 WHERE actived.class_number=${classNumber} AND actived.academy_code='${academyCode}' ORDER BY actived.created desc`;
+
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
