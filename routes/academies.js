@@ -28,6 +28,7 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
 /** 특정 계약 학원 조회 */
 router.get('/:code', useAuthCheck, (req, res, next) => {
+    console.log('enter !!!');
     if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
     if (req.verified.userType === 'teachers' && req.params.code !== 'current' && req.params.code !== req.verified.academyCode)
@@ -50,7 +51,9 @@ router.get('/:code/name', useAuthCheck, (req, res, next) => {
     if (req.verified.userType === 'teachers' && req.params.code !== 'current' && req.params.code !== req.verified.academyCode)
         return res.status(403).json({ code: 'not-allowed-user', message: 'unauthorized-access :: not allowed user.' });
 
-    let sql = `SELECT name FROM academies WHERE code='${req.params.code === 'current' ? req.verified.academyCode : req.params.code}'`;
+    let sql = `SELECT name, approved, plan_id FROM academies WHERE code='${
+        req.params.code === 'current' ? req.verified.academyCode : req.params.code
+    }'`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
