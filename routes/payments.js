@@ -19,6 +19,21 @@ Date.prototype.eliminateTime = function () {
     return this;
 };
 
+// 주문 추가
+router.post('/order-history', (req, res, next) => {
+    //
+});
+
+// 쿠폰 발급
+router.post('/coupon-history', useAuthCheck, (req, res, next) => {
+    const couponLists = req.body.couponLists;
+    const coupons = couponLists.map((d) => [d.id, d.academyCode]);
+    const giveCouponsSql = `INSERT INTO coupon_history `;
+});
+
+// 쿠폰 사용
+router.patch('/coupon-history', (req, res, next) => {});
+
 // 빌링키 발급
 router.get('/billing-key', (req, res, next) => {
     const customerKey = req.query.customerKey;
@@ -96,6 +111,18 @@ const updateSubscription = {
          * 다음달치 토큰(결제내역)과, 베타기간한정 및 학원 소비자 쿠폰까지 발급이 이뤄져야 함.
          */
 
+        /**
+         * 1. 오늘 날짜조회 (1, 10, 25, 28, 30, 31…등등) / 이전 달의 마지막 날을 조회(28, 29, 20, 31)
+         * 2. 오늘 날짜보다 이전 달의 마지막 날이 같거나 큰 경우 -> 오늘 날짜로 빌링 날짜 조회
+         * 3. 작을 경우 이전 달의 마지막 날로 빌링 날짜 조회 */
+
+        const thisDate = this.currentDate.getDate();
+        const pastEndDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 0).getDate();
+
+        let condBillingDate = null;
+        if (thisDate <= pastEndDate) condBillingDate = thisDate;
+        else condBillingDate = pastEndDate;
+
         // 먼저 기간 계산을 위해 플랜 정보 조회
         dbctrl((connection) => {
             const getPlanMenusSql = `SELECT * FROM plan_menus`;
@@ -121,10 +148,14 @@ const updateSubscription = {
                             currentTimestamp.eliminateTime();
                             switch (d.duration) {
                                 case 30:
-                                    _condition.startDateToSearch = currentTimestamp.setMonth(currentTimestamp.getMonth() - 1);
+                                    _condition.startDateToSearch = new Date(
+                                        this.currentDate.getFullYear(),
+                                        this.currentDate.getMonth() - 1,
+                                        condBillingDate,
+                                    );
                                     break;
                                 default:
-                                    _condition.startDateToSearch = currentTimestamp.setDate(currentTimestamp.getDate() - d.duration);
+                                    _condition.startDateToSearch = this.currentDate.setDate(this.currentDate.getDate() - d.duration);
                                     break;
                             }
                             return _condition;
@@ -188,6 +219,7 @@ const updateSubscription = {
                                 }
                             }
                             this.todayLists = dataLength < 1 ? [] : _obj;
+                            console.log(this.todayLists);
                             onSuccess(dataLength < 1 ? [] : _obj);
                         }
                     });
@@ -238,7 +270,6 @@ const updateSubscription = {
                                         console.log(res);
                                         delete this.todayLists[res.data.orderId];
                                         // 다음 플랜 주문 등록
-                                        // 쿠폰 발급
                                     })
                                     .catch((err) => {
                                         // 최종 결제에 실패한 경우 payments 상태 오류로 변경하고 일정시간 이후 재시도 함
@@ -263,6 +294,6 @@ const updateSubscription = {
     },
 };
 
-updateSubscription.startService();
+updateSubscription.getTodayLists();
 
 module.exports = router;
