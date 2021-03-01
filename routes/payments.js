@@ -34,6 +34,28 @@ router.post('/coupon-history', useAuthCheck, (req, res, next) => {
 // 쿠폰 사용
 router.patch('/coupon-history', (req, res, next) => {});
 
+// success페이지 결제 완료 정보 조회
+router.get('/payment-info', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    const academy_code = req.verified.academyCode;
+
+    const sql = `SELECT card_company, card_number, academies.email, academies.phone
+                FROM payments_info
+                join academies on academies.code =  '${academy_code}'
+                WHERE academy_code = '${academy_code}'`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) {
+                res.status(400).json(error);
+            } else res.json({ results });
+        });
+    });
+});
+
 // 빌링키 발급
 router.get('/billing-key', (req, res, next) => {
     const customerKey = req.query.customerKey;

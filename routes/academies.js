@@ -93,7 +93,7 @@ router.post('/', (req, res, next) => {
     //     return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     const { code, name, address, email, phone, numOfStudents, numOfTeachers } = req.body;
-    let sql = `INSERT INTO academies (code, name, email, address, phone, num_of_students, num_of_teachers) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    let sql = `INSERT INTO academies (code, name, address, email, phone, num_of_students, num_of_teachers) VALUES (?, ?, ?, ?, ?, ?, ?)`;
     dbctrl((connection) => {
         connection.query(sql, [code, name, address, email, phone, numOfStudents, numOfTeachers], (error, results, fields) => {
             connection.release();
