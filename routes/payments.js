@@ -51,7 +51,7 @@ router.get('/payment-info', useAuthCheck, (req, res, next) => {
             connection.release();
             if (error) {
                 res.status(400).json(error);
-            } else res.json(results);
+            } else res.json({ results });
         });
     });
 });
