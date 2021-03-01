@@ -164,23 +164,21 @@ const updateSubscription = {
                     // 조회 조건 sql 만들기
                     for (let i = 0; i < searchCondition.length; i++) {
                         if (i > 0) searchConditionSql += ' OR ';
-                        searchConditionSql += `(plan_id=${searchCondition[i].planId} AND DATE(plan_start)<DATE('${new Date(
+                        searchConditionSql += `(orders.plan_id=${searchCondition[i].planId} AND DATE(plan_start)<DATE('${new Date(
                             searchCondition[i].startDateToSearch,
                         ).format('yyyy-MM-dd')}'))`;
                     }
 
                     // 플랜별로 고객 주문사항(플랜 아이디, 시작일, 사용된 쿠폰, 빌링 키 등등) 조회하고, order_price - 쿠폰 목록 가격 할 것
-                    const getOrdersMeta = `SELECT order_history.no, order_history.plan_id,
-                    order_history.academy_code, order_history.order_price, order_history.next_plan_id,
-                    coupon_history.coupon_id, coupon_menus.discount, coupon_menus.type AS coupon_type,
-                    academies.type AS academy_type, academies.approved AS academy_approved
-                    FROM order_history
-                    LEFT JOIN coupon_history
-                    ON coupon_history.order_no=order_history.no
-                    LEFT JOIN coupon_menus
-                    ON coupon_menus.coupon_id=coupon_history.coupon_id
-                    JOIN academies
-                    ON academies.code=order_history.academy_code
+                    const getOrdersMeta = `SELECT orders.no, orders.academy_code, orders.plan_id, orders.next_plan_id, orders.plan_start, orders.billing_date, orders.order_price, orders.payment_price, orders.payment_status
+                    , coupon_menus.coupon_id, coupon_menus.name AS coupon_name, coupon_menus.discount, coupon_menus.type AS coupon_type
+                    , payments_info.customer_key, payments_info.billing_key
+                    , academies.type AS academy_type, academies.approved AS academy_approved
+                    FROM order_history AS orders
+                    LEFT JOIN coupon_history ON orders.no=coupon_history.order_no OR coupon_history.order_no='monthly'
+                    JOIN coupon_menus ON coupon_menus.coupon_id=coupon_history.coupon_id AND DATE(coupon_menus.expired)>=DATE(NOW())
+                    JOIN payments_info ON payments_info.academy_code=orders.academy_code
+                    JOIN academies ON academies.code=orders.academy_code
                     WHERE ${searchConditionSql}`;
                     connection.query(getOrdersMeta, (errorOrdersMeta, resultsOrdersMeta) => {
                         connection.release();
@@ -188,6 +186,7 @@ const updateSubscription = {
                             console.error(errorOrdersMeta);
                             onFailed(error);
                         } else {
+                            console.log(resultsOrdersMeta);
                             const _obj = {};
                             const dataLength = resultsOrdersMeta.length;
                             for (let i = 0; i < dataLength; i++) {
@@ -203,8 +202,8 @@ const updateSubscription = {
                                             resultsPlanMenus[resultsPlanMenus.findIndex((d) => d.idx === resultsOrdersMeta[i].plan_id)]
                                                 .name,
                                         paymentPrice: resultsOrdersMeta[i].order_price,
-                                        customerKey: '',
-                                        billingKey: '',
+                                        customerKey: resultsOrdersMeta[i].customer_key,
+                                        billingKey: resultsOrdersMeta[i].billing_key,
                                     };
                                 }
                                 switch (resultsOrdersMeta[i].coupon_type) {
