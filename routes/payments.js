@@ -315,6 +315,6 @@ const updateSubscription = {
     },
 };
 
-updateSubscription.getTodayLists();
+//updateSubscription.getTodayLists();
 
 module.exports = router;
