@@ -58,12 +58,13 @@ router.get('/contents-data/:actived_number', useAuthCheck, (req, res, next) => {
     ON in_class.class_number=actived.class_number
     LEFT JOIN assignment_result AS result
     ON actived.idx=result.actived_number AND students.auth_id=result.student_id
-    WHERE in_class.academy_code='${academyCode}' AND (actived.idx=(SELECT MAX(idx) FROM assignment_actived WHERE idx<${activedNumber} AND academy_code='${academyCode}' AND class_number=${classNumber}) OR actived.idx=${activedNumber})`;
+    WHERE in_class.academy_code='${academyCode}' AND actived.idx=${activedNumber}`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
             if (error) res.status(400).json(error);
             else {
+                console.log(results[0]);
                 res.json(results[0]);
             }
         });
