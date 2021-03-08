@@ -22,7 +22,7 @@ const dirProfileImages = path.join(__dirname.replace('/routes', ''), 'UploadedFi
 const uploadContentsRequests = multer({
     storage: multer.diskStorage({
         destination: function (req, file, cb) {
-            cb(null, 'UploadedFiles/ProfileImages/');
+            cb(null, 'UploadedFiles/ContentsRequests/');
         },
         filename: function (req, file, cb) {
             cb(null, Date.now() + '_' + file.originalname);
@@ -59,9 +59,6 @@ router.post('/requests-contents/:idx', [useAuthCheck, uploadContentsRequests.any
 
 /** 프로필 이미지 저장 및 경로 반환 */
 router.post('/profile-images', [useAuthCheck, uploadProfileImages.any()], (req, res, next) => {
-    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
-        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
-
     if (!req.files) return res.status(400).json({ code: 'no-files', message: 'No files' });
 
     res.json({ file_name: 'profile-images/' + req.files[0].filename });
