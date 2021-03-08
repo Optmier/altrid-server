@@ -19,6 +19,8 @@ const mime = {
 const dirContentsRequests = path.join(__dirname.replace('/routes', ''), 'UploadedFiles/ContentsRequests');
 // 프로필 이미지 저장 경로
 const dirProfileImages = path.join(__dirname.replace('/routes', ''), 'UploadedFiles/ProfileImages');
+
+// 컨텐츠 요청 파일 저장
 const uploadContentsRequests = multer({
     storage: multer.diskStorage({
         destination: function (req, file, cb) {
@@ -29,6 +31,7 @@ const uploadContentsRequests = multer({
         },
     }),
 });
+// 프로필 이미지 파일 저장
 const uploadProfileImages = multer({
     storage: multer.diskStorage({
         destination: function (req, file, cb) {
@@ -83,7 +86,7 @@ router.get('/requests-contents/*', useAuthCheck, (req, res, next) => {
 });
 
 /** 프로필 이미지 보기 */
-router.get('/profile-images/*', useAuthCheck, (req, res, next) => {
+router.get('/profile-images/*', (req, res, next) => {
     const file = decodeURI(path.join(dirProfileImages, req.path.replace('/profile-images', '')));
     if (file.indexOf(dirProfileImages + path.sep) !== 0) {
         return res.status(403).end('Forbidden');
