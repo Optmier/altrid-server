@@ -19,20 +19,178 @@ Date.prototype.eliminateTime = function () {
     return this;
 };
 
-// 주문 추가
-router.post('/order-history', (req, res, next) => {
-    //
+const toTimestamp = (isoDateStr) => {
+    let original = isoDateStr;
+    const decimalEnds = original.indexOf('Z');
+    const decimalStarts = decimalEnds - 4;
+    return original.replace('T', ' ').substring(0, decimalStarts);
+};
+
+// 현재 학원의 유효한 플랜 검사
+router.get('/order-history/current-valid', useAuthCheck, (req, res, next) => {
+    const academyPlanId = req.query.planId;
+    const academyCode = req.verified.academyCode;
+
+    // 플랜 메뉴에서 이용기간 조회
+    const planDurSql = `SELECT duration FROM plan_menus WHERE idx=${academyPlanId}`;
+    dbctrl((connection) => {
+        connection.query(planDurSql, (errorPlanDur, resultsPlanDur) => {
+            if (errorPlanDur) {
+                connection.release();
+                res.status(400).json(errorPlanDur);
+            } else {
+                if (resultsPlanDur && resultsPlanDur.length > 0) {
+                    let validPlanSql = `SELECT * FROM order_history WHERE academy_code='${academyCode}'`;
+                    // 플랜 이용 기간이 30일, 한달이면
+                    resultsPlanDur[0].duration = 30;
+                    if (resultsPlanDur[0].duration === 30) {
+                        validPlanSql += ` AND (DATE(plan_start) <= CURDATE() AND CURDATE() < DATE_ADD(plan_start, INTERVAL 1 MONTH))`;
+                    } else {
+                        validPlanSql += ` AND (DATE(plan_start) <= CURDATE() AND CURDATE() < DATE_ADD(plan_start, INTERVAL ${resultsPlanDur[0].duration} DAY))`;
+                    }
+
+                    connection.query(validPlanSql, (errorValidPlan, resultsValidPlan) => {
+                        connection.release();
+                        if (errorValidPlan) {
+                            res.status(400).json(errorValidPlan);
+                        } else {
+                            res.json(resultsValidPlan);
+                        }
+                    });
+                } else {
+                    connection.release();
+                    res.status(400).json(resultsPlanDur);
+                }
+            }
+        });
+    });
 });
 
-// 쿠폰 발급
-router.post('/coupon-history', useAuthCheck, (req, res, next) => {
+// 신규 주문(플랜 구독) 추가
+router.post('/order-history', useAuthCheck, (req, res, next) => {
+    const { orderNo, planId, orderPrice, paymentPrice, startDate } = req.body;
+    const academyCode = req.verified.academyCode;
+    const addPlanOrderSql = `INSERT INTO order_history (no, plan_id, academy_code, order_price, payment_price, plan_start, billing_date, next_plan_id, payment_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const planStartDate = new Date(startDate).eliminateTime();
+
+    dbctrl((connection) => {
+        connection.query(
+            addPlanOrderSql,
+            [orderNo, planId, academyCode, orderPrice, paymentPrice, planStartDate, planStartDate.getDate(), planId, 0],
+            (errorAddPlan, resultsAddPlan) => {
+                if (errorAddPlan) {
+                    connection.release();
+                } else {
+                    const updateAcademyPlanSql = `UPDATE academies SET plan_id=${planId} WHERE code='${academyCode}'`;
+                    connection.query(updateAcademyPlanSql, (errorUpdatePlan, resultsUpdatePlan) => {
+                        connection.release();
+                        if (errorUpdatePlan) {
+                            res.status(400).json(errorUpdatePlan);
+                        } else {
+                            res.json(resultsUpdatePlan);
+                        }
+                    });
+                }
+            },
+        );
+    });
+});
+
+// 현재 유효 플랜의 다음 플랜 변경
+router.patch('/order-history/mod-next-plan', useAuthCheck, (req, res, next) => {
+    const { orderIdx, nextPlanId } = req.body;
+    const academyCode = req.verified.academyCode;
+    const updatePlanSql = `UPDATE order_history SET next_plan_id=${nextPlanId} WHERE idx=${orderIdx} AND academy_code='${academyCode}'`;
+
+    dbctrl((connection) => {
+        connection.query(updatePlanSql, (errorUpdate, resultsUpdate) => {
+            connection.release();
+            if (errorUpdate) {
+                res.status(400).json(errorUpdate);
+            } else {
+                res.json(resultsUpdate);
+            }
+        });
+    });
+});
+
+// 쿠폰 조회
+router.get('/coupon-menus', useAuthCheck, (req, res, next) => {
+    const searchAll = req.query.searchAll;
+    const getCouponsSql = `SELECT * FROM coupon_menus${searchAll === 'true' ? '' : ' WHERE CURDATE() < expired'}`;
+
+    dbctrl((connection) => {
+        connection.query(getCouponsSql, (errorGetCoupons, resultsGetCoupons) => {
+            connection.release();
+            if (errorGetCoupons) {
+                res.status(400).json(errorGetCoupons);
+            } else {
+                res.json(resultsGetCoupons);
+            }
+        });
+    });
+});
+
+// 쿠폰 생성
+router.post('/coupon-menus', useAuthCheck, (req, res, next) => {
     const couponLists = req.body.couponLists;
     const coupons = couponLists.map((d) => [d.id, d.academyCode]);
-    const giveCouponsSql = `INSERT INTO coupon_history `;
+    const giveCouponsSql = `INSERT INTO coupon_menus `;
 });
 
-// 쿠폰 사용
-router.patch('/coupon-history', (req, res, next) => {});
+// 쿠폰 사용자 발급 (중복 검사)
+router.post('/coupon-history', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+
+    const couponIds = req.body.couponIds;
+    const orderNos = req.body.orderNos;
+    const status = req.body.status;
+    const usedAfterStdDate = req.body.usedAfterStdDate;
+    const usedAfterValues = req.body.usedAfterValues;
+    const usedAfterUnits = req.body.usedAfterUnits;
+
+    const currentDate = new Date().eliminateTime().format('yyyy-MM-dd');
+    const couponDatas = couponIds.map((d, i) => ({
+        couponId: d,
+        academyCode: academyCode,
+        orderNo: orderNos[i],
+        status: status[i],
+        usedAfterStdDate: new Date(usedAfterStdDate).eliminateTime().format('yyyy-MM-dd'),
+        usedAfterValue: usedAfterValues[i],
+        usedAfterUnit: usedAfterUnits[i],
+    }));
+
+    let giveACouponSql = '';
+    dbctrl((connection) => {
+        couponDatas.forEach((data) => {
+            console.log(data);
+            let dateCalced = '';
+            if (data.usedAfterUnit === 'm') {
+                dateCalced = `DATE_ADD('${data.usedAfterStdDate}', INTERVAL ${data.usedAfterValue} MONTH)`;
+            } else {
+                dateCalced = `DATE_ADD('${data.usedAfterStdDate}', INTERVAL ${data.usedAfterValue} DAY)`;
+            }
+            giveACouponSql += `INSERT INTO coupon_history (coupon_id, academy_code, order_no, status, used_at)
+            SELECT ${connection.escape(data.couponId)}, ${connection.escape(data.academyCode)}, ${connection.escape(
+                data.orderNo,
+            )}, ${connection.escape(data.status)}, ${dateCalced} FROM DUAL WHERE NOT EXISTS (
+                SELECT coupon_id, academy_code FROM coupon_history
+                WHERE coupon_id=${connection.escape(data.couponId)} AND academy_code=${connection.escape(data.academyCode)}
+            ); `;
+        });
+
+        connection.query(giveACouponSql, (errorGiveACoupon, resultsGiveACoupon) => {
+            connection.release();
+            if (errorGiveACoupon) {
+                res.status(400).json(errorGiveACoupon);
+            } else {
+                res.json(resultsGiveACoupon);
+            }
+        });
+    });
+});
 
 // success페이지 결제 완료 정보 조회
 router.get('/payment-info', useAuthCheck, (req, res, next) => {
@@ -41,9 +199,9 @@ router.get('/payment-info', useAuthCheck, (req, res, next) => {
 
     const academy_code = req.verified.academyCode;
 
-    const sql = `SELECT card_company, card_number, academies.email, academies.phone
+    const sql = `SELECT card_company, card_number, pg_name, academies.email, academies.phone, auth_date
                 FROM payments_info
-                join academies on academies.code =  '${academy_code}'
+                join academies on academies.code = '${academy_code}'
                 WHERE academy_code = '${academy_code}'`;
 
     dbctrl((connection) => {
@@ -60,6 +218,7 @@ router.get('/payment-info', useAuthCheck, (req, res, next) => {
 router.get('/billing-key', (req, res, next) => {
     const customerKey = req.query.customerKey;
     const authKey = req.query.authKey;
+    console.log(customerKey, authKey);
     axios
         .post(
             `${tossPaymentsApiUrl}/v1/billing/authorizations/${authKey}`,
@@ -79,8 +238,40 @@ router.get('/billing-key', (req, res, next) => {
             console.error('실패!');
             res.status(err.response.status).json(err);
         });
-    console.log(customerKey, authKey);
 });
+
+// 결제 정보 추가
+router.post('/payment-info', useAuthCheck, (req, res, next) => {
+    if (req.verified.userType !== 'teachers')
+        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
+
+    const academyCode = req.verified.academyCode;
+    const { mId, pgName, cardCompany, cardNumber, customerKey, billingKey, authenticatedAt } = req.body;
+
+    const sql = `INSERT INTO payments_info (academy_code, merchant_id, pg_name, card_company, card_number, customer_key, billing_key, auth_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    dbctrl((connection) => {
+        connection.query(
+            sql,
+            [academyCode, mId, pgName, cardCompany, cardNumber, customerKey, billingKey, authenticatedAt],
+            (error, results) => {
+                connection.release();
+                if (error) {
+                    res.status(400).json(error);
+                } else {
+                    res.status(201).json(results);
+                }
+            },
+        );
+    });
+});
+
+// 결제 정보 변경
+router.patch('/payment-info', useAuthCheck, (req, res, next) => {});
+
+// 결제 정보 삭제
+router.delete('/payment-info', useAuthCheck, (req, res, next) => {});
 
 // 결제 취소
 router.post('/:payment_key/cancel', (req, res, next) => {
@@ -315,6 +506,6 @@ const updateSubscription = {
     },
 };
 
-updateSubscription.getTodayLists();
+// updateSubscription.getTodayLists();
 
 module.exports = router;

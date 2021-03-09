@@ -28,7 +28,6 @@ router.get('/', useAuthCheck, (req, res, next) => {
 
 /** 특정 계약 학원 조회 */
 router.get('/:code', useAuthCheck, (req, res, next) => {
-    console.log('enter !!!');
     if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
     if (req.verified.userType === 'teachers' && req.params.code !== 'current' && req.params.code !== req.verified.academyCode)

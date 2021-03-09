@@ -96,7 +96,7 @@ router.delete('/students/:class_number', useAuthCheck, (req, res, next) => {
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let sql = `DELETE FROM students_in_class
-             WHERE class_number='${req.params.class_number}' and student_id IN(${req.body.students})`;
+             WHERE class_number=${req.params.class_number} and student_id IN(${req.body.students})`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
