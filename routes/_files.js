@@ -19,16 +19,19 @@ const mime = {
 const dirContentsRequests = path.join(__dirname.replace('/routes', ''), 'UploadedFiles/ContentsRequests');
 // 프로필 이미지 저장 경로
 const dirProfileImages = path.join(__dirname.replace('/routes', ''), 'UploadedFiles/ProfileImages');
+
+// 컨텐츠 요청 파일 저장
 const uploadContentsRequests = multer({
     storage: multer.diskStorage({
         destination: function (req, file, cb) {
-            cb(null, 'UploadedFiles/ProfileImages/');
+            cb(null, 'UploadedFiles/ContentsRequests/');
         },
         filename: function (req, file, cb) {
             cb(null, Date.now() + '_' + file.originalname);
         },
     }),
 });
+// 프로필 이미지 파일 저장
 const uploadProfileImages = multer({
     storage: multer.diskStorage({
         destination: function (req, file, cb) {
@@ -59,9 +62,6 @@ router.post('/requests-contents/:idx', [useAuthCheck, uploadContentsRequests.any
 
 /** 프로필 이미지 저장 및 경로 반환 */
 router.post('/profile-images', [useAuthCheck, uploadProfileImages.any()], (req, res, next) => {
-    if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
-        return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
-
     if (!req.files) return res.status(400).json({ code: 'no-files', message: 'No files' });
 
     res.json({ file_name: 'profile-images/' + req.files[0].filename });
@@ -86,7 +86,7 @@ router.get('/requests-contents/*', useAuthCheck, (req, res, next) => {
 });
 
 /** 프로필 이미지 보기 */
-router.get('/profile-images/*', useAuthCheck, (req, res, next) => {
+router.get('/profile-images/*', (req, res, next) => {
     const file = decodeURI(path.join(dirProfileImages, req.path.replace('/profile-images', '')));
     if (file.indexOf(dirProfileImages + path.sep) !== 0) {
         return res.status(403).end('Forbidden');
