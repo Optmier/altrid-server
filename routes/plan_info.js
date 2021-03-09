@@ -2,6 +2,7 @@ var express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
+// 1. stdNums : 학원별 학생 인원
 router.get('/students-num', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
 
@@ -18,10 +19,11 @@ router.get('/students-num', useAuthCheck, (req, res, next) => {
     });
 });
 
+// 2. teacherNums : 학원별 선생님 인원
 router.get('/teachers-num', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
 
-    let sql = `SELECT COUNT(*)
+    let sql = `SELECT COUNT(*) as teacherNums
                 FROM teachers
                 WHERE academy_code = '${academy_code}'`;
 
@@ -34,11 +36,12 @@ router.get('/teachers-num', useAuthCheck, (req, res, next) => {
     });
 });
 
+// 3. fileCounts : 월별 파일 업로드 수
 router.get('/assignment-drafts', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
 
-    let sql = `SELECT COUNT(*)
+    let sql = `SELECT COUNT(*) as fileCounts
                 FROM assignment_draft
                 WHERE file_url IS NOT NULL AND teacher_id = '${teacher_id}' AND created <(
                     SELECT
@@ -68,12 +71,13 @@ router.get('/assignment-drafts', useAuthCheck, (req, res, next) => {
     });
 });
 
+// 4. eyetrackAssigments : 시선흐름 과제 수
 router.get('/assignment-actived', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
 
     let sql = `SELECT
-                    COUNT(*)
+                    COUNT(*) as eyetrackAssigments
                 FROM
                     assignment_actived
                 WHERE
@@ -87,3 +91,5 @@ router.get('/assignment-actived', useAuthCheck, (req, res, next) => {
         });
     });
 });
+
+module.exports = router;
