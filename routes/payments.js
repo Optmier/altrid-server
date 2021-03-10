@@ -224,8 +224,10 @@ router.get('/billing-key', (req, res, next) => {
             `${tossPaymentsApiUrl}/v1/billing/authorizations/${authKey}`,
             { customerKey: customerKey },
             {
+                auth: {
+                    username: paymentsSecretKey,
+                },
                 headers: {
-                    Authorization: `Basic ${paymentsSecretKey}`,
                     'Content-Type': 'application/json',
                 },
             },
@@ -235,7 +237,7 @@ router.get('/billing-key', (req, res, next) => {
             res.status(r.status).json(r.data);
         })
         .catch((err) => {
-            console.error('실패!');
+            console.error('실패!', err);
             res.status(err.response.status).json(err);
         });
 });
@@ -254,7 +256,7 @@ router.post('/payment-info', useAuthCheck, (req, res, next) => {
     dbctrl((connection) => {
         connection.query(
             sql,
-            [academyCode, mId, pgName, cardCompany, cardNumber, customerKey, billingKey, authenticatedAt],
+            [academyCode, mId, pgName, cardCompany, cardNumber, customerKey, billingKey, new Date(authenticatedAt).format('yyyy-MM-dd')],
             (error, results) => {
                 connection.release();
                 if (error) {
@@ -291,8 +293,10 @@ router.post('/:payment_key/cancel', (req, res, next) => {
                             cancelAmount: resultsSql[0].payment_price,
                         },
                         {
+                            auth: {
+                                username: paymentsSecretKey,
+                            },
                             headers: {
-                                Authorization: `Basic ${paymentsSecretKey}`,
                                 'Content-Type': 'application/json',
                             },
                         },
@@ -470,8 +474,10 @@ const updateSubscription = {
                                             taxFreeAmount: 0,
                                         },
                                         {
+                                            auth: {
+                                                username: paymentsSecretKey,
+                                            },
                                             headers: {
-                                                Authorization: `Basic ${paymentsSecretKey}`,
                                                 'Content-Type': 'application/json',
                                             },
                                         },
