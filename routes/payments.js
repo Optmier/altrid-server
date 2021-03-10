@@ -40,14 +40,17 @@ router.get('/order-history/current-valid', useAuthCheck, (req, res, next) => {
                 res.status(400).json(errorPlanDur);
             } else {
                 if (resultsPlanDur && resultsPlanDur.length > 0) {
-                    let validPlanSql = `SELECT * FROM order_history WHERE academy_code='${academyCode}'`;
+                    let nextDate = '';
                     // 플랜 이용 기간이 30일, 한달이면
                     resultsPlanDur[0].duration = 30;
                     if (resultsPlanDur[0].duration === 30) {
-                        validPlanSql += ` AND (DATE(plan_start) <= CURDATE() AND CURDATE() < DATE_ADD(plan_start, INTERVAL 1 MONTH))`;
+                        nextDate += `DATE_ADD(plan_start, INTERVAL 1 MONTH)`;
                     } else {
-                        validPlanSql += ` AND (DATE(plan_start) <= CURDATE() AND CURDATE() < DATE_ADD(plan_start, INTERVAL ${resultsPlanDur[0].duration} DAY))`;
+                        nextDate += `DATE_ADD(plan_start, INTERVAL ${resultsPlanDur[0].duration} DAY)`;
                     }
+
+                    const validPlanSql = `SELECT *, ${nextDate} AS billing_date FROM order_history WHERE academy_code='${academyCode}' 
+                    AND (DATE(plan_start) <= CURDATE() AND CURDATE() < ${nextDate})`;
 
                     connection.query(validPlanSql, (errorValidPlan, resultsValidPlan) => {
                         connection.release();
@@ -70,15 +73,17 @@ router.get('/order-history/current-valid', useAuthCheck, (req, res, next) => {
 router.post('/order-history', useAuthCheck, (req, res, next) => {
     const { orderNo, planId, orderPrice, paymentPrice, startDate } = req.body;
     const academyCode = req.verified.academyCode;
-    const addPlanOrderSql = `INSERT INTO order_history (no, plan_id, academy_code, order_price, payment_price, plan_start, billing_date, next_plan_id, payment_status)
+    const addPlanOrderSql = `INSERT INTO order_history (no, plan_id, academy_code, order_price, payment_price, plan_start, billing_day, next_plan_id, payment_status)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const planStartDate = new Date(startDate).eliminateTime();
+    const currentDay = planStartDate.getDate();
+    const billingDay = currentDay > 27 ? 31 : currentDay;
 
     dbctrl((connection) => {
         connection.query(
             addPlanOrderSql,
-            [orderNo, planId, academyCode, orderPrice, paymentPrice, planStartDate, planStartDate.getDate(), planId, 0],
+            [orderNo, planId, academyCode, orderPrice, paymentPrice, planStartDate, billingDay, planId, 0],
             (errorAddPlan, resultsAddPlan) => {
                 if (errorAddPlan) {
                     connection.release();
@@ -387,7 +392,7 @@ const updateSubscription = {
                     }
 
                     // 플랜별로 고객 주문사항(플랜 아이디, 시작일, 사용된 쿠폰, 빌링 키 등등) 조회하고, order_price - 쿠폰 목록 가격 할 것
-                    const getOrdersMeta = `SELECT orders.no, orders.academy_code, orders.plan_id, orders.next_plan_id, orders.plan_start, orders.billing_date, orders.order_price, orders.payment_price, orders.payment_status
+                    const getOrdersMeta = `SELECT orders.no, orders.academy_code, orders.plan_id, orders.next_plan_id, orders.plan_start, orders.billing_day, orders.order_price, orders.payment_price, orders.payment_status
                     , coupon_menus.coupon_id, coupon_menus.name AS coupon_name, coupon_menus.discount, coupon_menus.type AS coupon_type
                     , payments_info.customer_key, payments_info.billing_key
                     , academies.type AS academy_type, academies.approved AS academy_approved
