@@ -326,7 +326,7 @@ const updateSubscription = {
     plans: null,
     todayLists: {},
     updateIntervalId: null,
-    currentDate: new Date().eliminateTime(),
+    currentDate: new Date('2021-05-10').eliminateTime(),
     getTodayLists(onSuccess = () => {}, onFailed = () => {}) {
         /** 여기에 데이터베이스에서 현재 날짜로 조회하고, 결제 가격, 쿠폰 할인 등등을 포함 조회하여
          * 최종 결제 금액까지 계산되어서 나오고,
@@ -355,93 +355,89 @@ const updateSubscription = {
                     onFailed(error);
                 } else {
                     // temp method
-                    resultsPlanMenus = resultsPlanMenus.map((d) => ({ ...d, duration: 30 }));
+                    resultsPlanMenus = resultsPlanMenus.filter((d) => d.name !== 'free').map((d) => ({ ...d, duration: 30 }));
                     // 플랜 메뉴를 가져왔으면 플랜별로 현재 날짜에 duration을 차감하여 order_history 에서 결제예정자 조회
-                    const searchCondition = resultsPlanMenus
-                        .filter((d) => d.name !== 'free')
-                        .map((d) => {
-                            const currentTimestamp = new Date();
-                            const _condition = {
-                                planId: d.idx,
-                                planName: d.name,
-                                startDateToSearch: null,
-                            };
-                            // 시간 제거
-                            currentTimestamp.eliminateTime();
-                            switch (d.duration) {
-                                case 30:
-                                    _condition.startDateToSearch = new Date(
-                                        this.currentDate.getFullYear(),
-                                        this.currentDate.getMonth() - 1,
-                                        condBillingDate,
-                                    );
-                                    break;
-                                default:
-                                    _condition.startDateToSearch = this.currentDate.setDate(this.currentDate.getDate() - d.duration);
-                                    break;
-                            }
-                            return _condition;
-                        });
-                    let searchConditionSql = '';
-                    // 조회 조건 sql 만들기
-                    for (let i = 0; i < searchCondition.length; i++) {
-                        if (i > 0) searchConditionSql += ' OR ';
-                        searchConditionSql += `(orders.plan_id=${searchCondition[i].planId} AND DATE(plan_start)<DATE('${new Date(
-                            searchCondition[i].startDateToSearch,
-                        ).format('yyyy-MM-dd')}'))`;
+                    this.plans = resultsPlanMenus;
+                    let todayListsCondition = '';
+                    const planMenusLength = resultsPlanMenus.length;
+                    for (let i = 0; i < planMenusLength; i++) {
+                        if (i > 0) todayListsCondition += ' OR ';
+                        switch (resultsPlanMenus[i].duration) {
+                            // 30이면 한달 후로 계산함
+                            case 30:
+                                todayListsCondition += `(order_history.plan_id=${
+                                    resultsPlanMenus[i].idx
+                                } AND IF(DAY(plan_start) >= 28, LAST_DAY(plan_start + INTERVAL 1 MONTH), DATE_ADD(plan_start, INTERVAL +1 MONTH)) <= DATE("${this.currentDate.format(
+                                    'yyyy-MM-dd',
+                                )}"))`;
+                                break;
+                            default:
+                                todayListsCondition += `(order_history.plan_id=${
+                                    resultsPlanMenus[i].idx
+                                } AND IF(DAY(plan_start) >= 28, LAST_DAY(plan_start + INTERVAL ${
+                                    resultsPlanMenus[i].duration
+                                } DAY), DATE_ADD(plan_start, INTERVAL +${
+                                    resultsPlanMenus[i].duration
+                                } DAY)) <= DATE("${this.currentDate.format('yyyy-MM-dd')}"))`;
+                                break;
+                        }
                     }
+                    const todayListsSql = `SELECT order_history.*, payments_info.customer_key, payments_info.billing_key, 
+                    academies.email, academies.phone, academies.type AS academy_type, academies.approved AS academy_approved,
+                    (SELECT COUNT(DISTINCT student_id) FROM students_in_class WHERE academy_code=academies.code) AS max_students
+                    FROM order_history 
+                    LEFT JOIN payments_info ON payments_info.academy_code=order_history.academy_code
+                    JOIN academies ON academies.code=order_history.academy_code
+                    WHERE ${todayListsCondition} AND order_history.payment_status IS NULL`;
+                    // console.log(todayListsSql);
+                    // console.log(this.plans);
 
-                    // 플랜별로 고객 주문사항(플랜 아이디, 시작일, 사용된 쿠폰, 빌링 키 등등) 조회하고, order_price - 쿠폰 목록 가격 할 것
-                    const getOrdersMeta = `SELECT orders.no, orders.academy_code, orders.plan_id, orders.next_plan_id, orders.plan_start, orders.billing_day, orders.order_price, orders.payment_price, orders.payment_status
-                    , coupon_menus.coupon_id, coupon_menus.name AS coupon_name, coupon_menus.discount, coupon_menus.type AS coupon_type
-                    , payments_info.customer_key, payments_info.billing_key
-                    , academies.type AS academy_type, academies.approved AS academy_approved
-                    FROM order_history AS orders
-                    LEFT JOIN coupon_history ON orders.no=coupon_history.order_no OR coupon_history.order_no='monthly'
-                    JOIN coupon_menus ON coupon_menus.coupon_id=coupon_history.coupon_id AND DATE(coupon_menus.expired)>=DATE(NOW())
-                    JOIN payments_info ON payments_info.academy_code=orders.academy_code
-                    JOIN academies ON academies.code=orders.academy_code
-                    WHERE ${searchConditionSql}`;
-                    connection.query(getOrdersMeta, (errorOrdersMeta, resultsOrdersMeta) => {
-                        connection.release();
-                        if (errorOrdersMeta) {
-                            console.error(errorOrdersMeta);
-                            onFailed(error);
+                    connection.query(todayListsSql, (errorOrders, resultsOrders) => {
+                        if (errorOrders) {
+                            connection.release();
+                            console.log(errorOrders);
                         } else {
-                            console.log(resultsOrdersMeta);
-                            const _obj = {};
-                            const dataLength = resultsOrdersMeta.length;
-                            for (let i = 0; i < dataLength; i++) {
-                                const orderNo = resultsOrdersMeta[i].no;
-                                if (!_obj[orderNo]) {
-                                    _obj[orderNo] = {
-                                        academyCode: resultsOrdersMeta[i].academy_code,
-                                        academyType: resultsOrdersMeta[i].academy_type,
-                                        academyApproved: resultsOrdersMeta[i].academy_approved,
-                                        currentPlanId: resultsOrdersMeta[i].plan_id,
-                                        nextPlanId: resultsOrdersMeta[i].next_plan_id,
-                                        planName:
-                                            resultsPlanMenus[resultsPlanMenus.findIndex((d) => d.idx === resultsOrdersMeta[i].plan_id)]
-                                                .name,
-                                        paymentPrice: resultsOrdersMeta[i].order_price,
-                                        customerKey: resultsOrdersMeta[i].customer_key,
-                                        billingKey: resultsOrdersMeta[i].billing_key,
-                                    };
+                            const academyCodes = !resultsOrders.length ? "''" : resultsOrders.map((d) => `'${d.academy_code}'`);
+                            const orderNos = resultsOrders.map((d) => `'${d.no}'`);
+                            orderNos.push("'monthly'");
+                            const couponsSql = `SELECT * FROM coupon_history 
+                            JOIN coupon_menus ON coupon_history.coupon_id=coupon_menus.coupon_id AND DATE('${this.currentDate.format(
+                                'yyyy-MM-dd',
+                            )}') < coupon_menus.expired 
+                            WHERE academy_code IN (${academyCodes}) AND 
+                            (
+                                (order_no='monthly' AND status IS NULL)
+                                OR
+                                (order_no IN (${orderNos}) AND status='queued' AND used_at <= DATE('${this.currentDate.format(
+                                'yyyy-MM-dd',
+                            )}'))
+                            )`;
+
+                            connection.query(couponsSql, (errorCoupons, resultsCoupons) => {
+                                connection.release();
+                                if (errorCoupons) {
+                                    console.log(errorCoupons);
+                                } else {
+                                    // console.log(resultsCoupons);
+                                    // 금일 결제 예정자 정리
+                                    const todayLists = {};
+                                    const todayListsLength = resultsOrders.length;
+                                    for (let i = 0; i < todayListsLength; i++) {
+                                        todayLists[resultsOrders[i].no] = resultsOrders[i];
+                                        todayLists[resultsOrders[i].no].coupons = [];
+                                    }
+                                    // console.log(todayLists);
+                                    // 계정 별로 쿠폰 먹이기
+                                    const couponsLength = resultsCoupons.length;
+                                    for (let i = 0; i < couponsLength; i++) {
+                                        const _fdOrderNo = Object.keys(todayLists).find(
+                                            (no) => todayLists[no].academy_code === resultsCoupons[i].academy_code,
+                                        );
+                                        todayLists[_fdOrderNo].coupons.push(resultsCoupons[i]);
+                                    }
+                                    console.log(todayLists['9999995_OcMK9j7PXCf'].coupons);
                                 }
-                                switch (resultsOrdersMeta[i].coupon_type) {
-                                    case 'absolute':
-                                        _obj[orderNo].paymentPrice -= resultsOrdersMeta[i].discount;
-                                        break;
-                                    case 'percentage':
-                                        _obj[orderNo].paymentPrice -= _obj[orderNo].paymentPrice * resultsOrdersMeta[i].discount * 0.01;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                            this.todayLists = dataLength < 1 ? [] : _obj;
-                            console.log(this.todayLists);
-                            onSuccess(dataLength < 1 ? [] : _obj);
+                            });
                         }
                     });
                 }
@@ -517,6 +513,6 @@ const updateSubscription = {
     },
 };
 
-// updateSubscription.getTodayLists();
+updateSubscription.getTodayLists();
 
 module.exports = router;
