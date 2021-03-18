@@ -7,8 +7,12 @@ Date.prototype.format = dateformat;
 const paymentsSecretKey = require('../configs/encryptionKey')[
     process.env.RUN_MODE === 'dev' ? 'tossPaymentsTestSecretKey' : 'tossPaymentsSecretKey'
 ];
-console.log(paymentsSecretKey);
 const tossPaymentsApiUrl = 'https://api.tosspayments.com';
+/** https://github.com/jeanlescure/short-unique-id
+ * Copyright (c) 2018-2020 Short Unique ID Contributors.
+ * Licensed under the Apache License 2.0.
+ */
+const shortUniqueId = require('short-unique-id').default;
 
 Date.prototype.eliminateTime = function () {
     this.setHours(0);
@@ -326,7 +330,7 @@ const updateSubscription = {
     plans: null,
     todayLists: {},
     updateIntervalId: null,
-    currentDate: new Date('2021-05-10').eliminateTime(),
+    currentDate: new Date().eliminateTime(),
     getTodayLists(onSuccess = () => {}, onFailed = () => {}) {
         /** 여기에 데이터베이스에서 현재 날짜로 조회하고, 결제 가격, 쿠폰 할인 등등을 포함 조회하여
          * 최종 결제 금액까지 계산되어서 나오고,
@@ -352,7 +356,7 @@ const updateSubscription = {
                 if (errorPlanMenus) {
                     connection.release();
                     console.error(errorPlanMenus);
-                    onFailed(error);
+                    onFailed(errorPlanMenus);
                 } else {
                     // temp method
                     resultsPlanMenus = resultsPlanMenus.filter((d) => d.name !== 'free').map((d) => ({ ...d, duration: 30 }));
@@ -388,7 +392,7 @@ const updateSubscription = {
                     FROM order_history 
                     LEFT JOIN payments_info ON payments_info.academy_code=order_history.academy_code
                     JOIN academies ON academies.code=order_history.academy_code
-                    WHERE ${todayListsCondition} AND order_history.payment_status IS NULL`;
+                    WHERE (${todayListsCondition}) AND (order_history.payment_status IS NULL OR order_history.payment_status='failed')`;
                     // console.log(todayListsSql);
                     // console.log(this.plans);
 
@@ -396,6 +400,7 @@ const updateSubscription = {
                         if (errorOrders) {
                             connection.release();
                             console.log(errorOrders);
+                            onFailed(errorOrders);
                         } else {
                             const academyCodes = !resultsOrders.length ? "''" : resultsOrders.map((d) => `'${d.academy_code}'`);
                             const orderNos = resultsOrders.map((d) => `'${d.no}'`);
@@ -417,6 +422,7 @@ const updateSubscription = {
                                 connection.release();
                                 if (errorCoupons) {
                                     console.log(errorCoupons);
+                                    onFailed(errorCoupons);
                                 } else {
                                     // console.log(resultsCoupons);
                                     // 금일 결제 예정자 정리
@@ -424,18 +430,63 @@ const updateSubscription = {
                                     const todayListsLength = resultsOrders.length;
                                     for (let i = 0; i < todayListsLength; i++) {
                                         todayLists[resultsOrders[i].no] = resultsOrders[i];
+                                        todayLists[resultsOrders[i].no].order_price = todayLists[resultsOrders[i].no].payment_price =
+                                            this.plans.find((d) => d.idx === resultsOrders[i].plan_id).price *
+                                            resultsOrders[i].max_students;
+                                        todayLists[resultsOrders[i].no].plan_name = this.plans.find(
+                                            (d) => d.idx === resultsOrders[i].plan_id,
+                                        ).name;
                                         todayLists[resultsOrders[i].no].coupons = [];
+                                        todayLists[resultsOrders[i].no].payment_status =
+                                            resultsOrders[i].payment_status === null ? 'pending' : resultsOrders[i].payment_status;
                                     }
-                                    // console.log(todayLists);
                                     // 계정 별로 쿠폰 먹이기
                                     const couponsLength = resultsCoupons.length;
                                     for (let i = 0; i < couponsLength; i++) {
                                         const _fdOrderNo = Object.keys(todayLists).find(
                                             (no) => todayLists[no].academy_code === resultsCoupons[i].academy_code,
                                         );
-                                        todayLists[_fdOrderNo].coupons.push(resultsCoupons[i]);
+                                        if (resultsCoupons[i].coupon_id === 'personal_standard' && todayLists[_fdOrderNo].plan_id === 2) {
+                                            todayLists[_fdOrderNo].coupons.push(resultsCoupons[i]);
+                                        } else if (
+                                            resultsCoupons[i].coupon_id === 'personal_premium' &&
+                                            todayLists[_fdOrderNo].plan_id === 3
+                                        ) {
+                                            todayLists[_fdOrderNo].coupons.push(resultsCoupons[i]);
+                                        } else if (
+                                            resultsCoupons[i].coupon_id !== 'personal_standard' &&
+                                            resultsCoupons[i].coupon_id !== 'personal_premium'
+                                        ) {
+                                            todayLists[_fdOrderNo].coupons.push(resultsCoupons[i]);
+                                        }
                                     }
-                                    console.log(todayLists['9999995_OcMK9j7PXCf'].coupons);
+
+                                    for (const key in todayLists) {
+                                        const couponList = todayLists[key].coupons;
+                                        const length = couponList.length;
+                                        for (let i = 0; i < length; i++) {
+                                            const couponType = couponList[i].type;
+                                            switch (couponType) {
+                                                case 'absolute':
+                                                    todayLists[key].payment_price -= couponList[i].discount * todayLists[key].max_students;
+
+                                                    break;
+                                                case 'percentage':
+                                                    todayLists[key].payment_price -=
+                                                        this.plans.find((d) => d.idx === todayLists[key].plan_id).price *
+                                                        couponList[i].discount *
+                                                        0.01 *
+                                                        todayLists[key].max_students;
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                            if (todayLists[key].payment_price < 0) todayLists[key].payment_price < 0;
+                                        }
+                                    }
+                                    this.todayLists = todayLists;
+                                    console.log('successful updated');
+                                    onSuccess(todayLists);
                                 }
                             });
                         }
@@ -446,6 +497,7 @@ const updateSubscription = {
     },
     // 자동 결제 서비스 시작
     startService() {
+        let updateCounts = 0;
         this.getTodayLists(
             (res) => {
                 // 자동 결제를 위해 업데이트 함수 만들기
@@ -454,52 +506,209 @@ const updateSubscription = {
                         // 날짜 차이 비교 해서 날짜가 바뀌었는지 체크
                         const updatedDate = new Date().eliminateTime();
                         // 날짜가 바뀌었을 경우 결제 예정 목록 최신화
+
+                        // 10초마다 업데이트 해서 날짜 변경이 감지되면 업데이트
                         if (updatedDate.getTime() > this.currentDate.getTime()) {
+                            console.log('date changed...checking updates..');
                             this.getTodayLists();
                         }
-                        // 지정된 시간이 되면 결제 목록에서 결제 시도
-                        if (new Date().getHours() >= 9) {
-                            // Axios 호출 및 결제 시도
-                            Object.keys(this.todayLists).forEach((orderNo) => {
-                                const currentOrder = this.todayLists[orderNo];
-                                axios
-                                    .post(
-                                        `${tossPaymentsApiUrl}/v1/billing/${currentOrder.billingKey}`,
-                                        {
-                                            amount: currentOrder.paymentPrice,
-                                            customerEmail: null,
-                                            customerKey: currentOrder.customerKey,
-                                            customerPhone: null,
-                                            orderId: orderNo,
-                                            orderName: `${this.currentDate.getMonth() + 1}월 ${currentOrder.planName} 플랜 이용료`,
-                                            taxFreeAmount: 0,
-                                        },
-                                        {
-                                            auth: {
-                                                username: paymentsSecretKey,
-                                            },
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                            },
-                                        },
-                                    )
-                                    .then((res) => {
-                                        // 최종 결제에 성공한 경우 목록에서 지우고 payments 상태 완료로 변경
-                                        console.log('성공 입니다!');
-                                        console.log(res);
-                                        delete this.todayLists[res.data.orderId];
-                                        // 다음 플랜 주문 등록
-                                    })
-                                    .catch((err) => {
-                                        // 최종 결제에 실패한 경우 payments 상태 오류로 변경하고 일정시간 이후 재시도 함
-                                        console.log('실패 입니다.');
-                                        console.error(err);
+
+                        // console.log(res);
+
+                        // 30분 마다 체크
+                        if (updateCounts >= 10) {
+                            console.log('updating metas interval...');
+                            console.log(this.todayLists);
+                            this.getTodayLists((res) => {
+                                // 지정된 시간(체크카드 공동 점검시간 고려)이 되면 결제 목록에서 결제 시도
+                                if (new Date().getHours() >= 3) {
+                                    // Axios 호출 및 결제 시도
+                                    Object.keys(this.todayLists).forEach((orderNo) => {
+                                        const currentOrder = this.todayLists[orderNo];
+                                        // console.log(currentOrder);
+                                        // console.log(currentOrder.billing_key, currentOrder.customer_key);
+                                        // 빌링키가 있는 경우에만 결제 (없는 경우는 보류하고 넘김)
+                                        if (currentOrder.billing_key && currentOrder.customer_key) {
+                                            console.log('innerinner!!');
+                                            axios
+                                                .post(
+                                                    `${tossPaymentsApiUrl}/v1/billing/${currentOrder.billing_key}`,
+                                                    {
+                                                        amount: currentOrder.payment_price,
+                                                        customerEmail: currentOrder.email,
+                                                        customerKey: currentOrder.customer_key,
+                                                        orderId: orderNo,
+                                                        orderName: `${this.currentDate.getMonth() + 1}월 ${
+                                                            currentOrder.plan_name
+                                                        } 플랜 이용료`,
+                                                        taxFreeAmount: 0,
+                                                    },
+                                                    {
+                                                        auth: {
+                                                            username: paymentsSecretKey,
+                                                        },
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                        },
+                                                    },
+                                                )
+                                                .then((res) => {
+                                                    // 최종 결제에 성공한 경우 목록에서 지우고 payments 상태 완료로 변경
+                                                    console.log('성공 입니다!');
+                                                    // console.log(res);
+                                                    // delete this.todayLists[res.data.orderId];
+
+                                                    // 결제 내역 기록 및 다음 플랜 주문 등록
+                                                    // 필요한 데이터 값 지정
+                                                    const {
+                                                        paymentKey,
+                                                        orderId,
+                                                        totalAmount,
+                                                        balanceAmount,
+                                                        status,
+                                                        approvedAt,
+                                                        card,
+                                                    } = res.data;
+                                                    dbctrl((connection) => {
+                                                        // 주문 내역에 결제 사항 업데이트
+                                                        console.log(this.todayLists, orderId);
+                                                        const updateOrdersSql = `UPDATE order_history SET order_price=${this.todayLists[orderId].order_price}, payment_price=${balanceAmount}, payment_status='${paymentKey}'
+                                                        WHERE no='${orderId}'`;
+                                                        connection.query(updateOrdersSql, (errorUpdateOrders, resultsUpdateOrders) => {
+                                                            if (errorUpdateOrders) {
+                                                                connection.release();
+                                                                console.error(
+                                                                    '결제 정보를 업데이트 하는 도중 오류가 발생했습니다!',
+                                                                    errorUpdateOrders,
+                                                                );
+                                                            } else {
+                                                                // 다음 플랜 내역 추가 및 업데이트 (다음 플랜 아이디가 스탠다드나 프리미엄일때, 그리고 결제가 18시 전까지 정상적으로 처리된 경우에 한해서만)
+                                                                const generateUid = new shortUniqueId();
+                                                                const newOrderNo = new Date().getTime() + '_' + generateUid(11);
+                                                                const newPlanId = this.todayLists[orderId].next_plan_id;
+                                                                const newAcademyCode = this.todayLists[orderId].academy_code;
+                                                                const newPlanStart = this.currentDate.format('yyyy-MM-dd HH:mm:ss');
+                                                                const newBillingDay = this.todayLists[orderId].billing_day;
+                                                                const newNextPlanId = newPlanId;
+                                                                const newPaymentStatus = null;
+
+                                                                if (
+                                                                    this.todayLists[orderId].payment_status === 'failed' ||
+                                                                    newPlanId === 1
+                                                                ) {
+                                                                    console.log(
+                                                                        orderId +
+                                                                            ' 주문건은 이전 결제 실패 이력이 있거나 다음 플랜이 무료 이므로 다음 구독 정보가 추가되지 않습니다.',
+                                                                    );
+                                                                }
+
+                                                                const addNextPlanSql = `INSERT INTO order_history (no, plan_id, academy_code, plan_start, billing_day, next_plan_id, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?);
+                                                                UPDATE academies SET plan_id=${newNextPlanId}`;
+
+                                                                connection.query(
+                                                                    addNextPlanSql,
+                                                                    [
+                                                                        newOrderNo,
+                                                                        newPlanId,
+                                                                        newAcademyCode,
+                                                                        newPlanStart,
+                                                                        newBillingDay,
+                                                                        newNextPlanId,
+                                                                        newPaymentStatus,
+                                                                    ],
+                                                                    (errorAddNextPlan, resultsAddNextPlan) => {
+                                                                        connection.release();
+                                                                        if (errorAddNextPlan) {
+                                                                            console.error(
+                                                                                '결제 정보를 업데이트 하는 도중 오류가 발생했습니다!',
+                                                                                errorAddNextPlan,
+                                                                            );
+                                                                        } else {
+                                                                            delete this.todayLists[orderId];
+                                                                            console.log(
+                                                                                '모든 프로세스 성공적으로 완료됨!',
+                                                                                resultsAddNextPlan,
+                                                                            );
+                                                                        }
+                                                                    },
+                                                                );
+                                                            }
+                                                        });
+                                                    });
+                                                })
+                                                .catch((err) => {
+                                                    // 최종 결제에 실패한 경우 payments 상태 오류로 변경하고 일정시간 이후 재시도 함
+                                                    console.log('실패 입니다.');
+                                                    const configData = JSON.parse(err.response.config.data);
+                                                    const responseMsg = err.response.data.message;
+                                                    console.log(configData, responseMsg);
+
+                                                    // 이미 결제가 성공한 주문건인 경우 결제완료 처리
+                                                    if (responseMsg.includes('S007')) {
+                                                        const updateCompletedSql = `UPDATE order_history SET payment_status='completed' WHERE no='${configData.orderId}'`;
+                                                        dbctrl((connection) => {
+                                                            connection.query(
+                                                                updateCompletedSql,
+                                                                (errorUpdateCompleted, resultsUpdateCompleted) => {
+                                                                    connection.release();
+                                                                    if (errorUpdateCompleted) {
+                                                                        console.error(errorUpdateCompleted);
+                                                                    } else {
+                                                                        console.log(resultsUpdateCompleted);
+                                                                    }
+                                                                },
+                                                            );
+                                                        });
+                                                    }
+                                                });
+                                        } else {
+                                            console.log('주의::' + orderNo + ' 빌링키 없음!');
+                                        }
+                                        // 오후 6시(18)가 지나도 결제에 실패한 주문사항에 대해서는 일단 해당 학원의 플랜을 FREE로 돌림 (1회성으로 체크)
+                                        // console.log(currentOrder);
+                                        if (new Date().getHours() >= 18 && currentOrder.payment_status === 'pending') {
+                                            this.todayLists[orderNo].payment_status = 'failed';
+                                            dbctrl((connection) => {
+                                                // 주문 목록 결제실패
+                                                const updateFailedSql = `UPDATE order_history SET payment_status='failed' WHERE no='${currentOrder.no}'`;
+                                                connection.query(updateFailedSql, (errorUpdateFailed, resultsUpdateFailed) => {
+                                                    if (errorUpdateFailed) {
+                                                        connection.release();
+                                                        console.error(errorUpdateFailed);
+                                                    } else {
+                                                        // 학원의 플랜을 FREE 로 변경, STANDARD 또는 PREMIUM 해지
+                                                        const updatePlanFreeSql = `UPDATE academies SET plan_id=1 WHERE code='${currentOrder.academy_code}'`;
+                                                        connection.query(
+                                                            updatePlanFreeSql,
+                                                            (errorUpdatePlanFree, resultsUpdatePlanFree) => {
+                                                                connection.release();
+                                                                if (errorUpdatePlanFree) {
+                                                                    console.error(errorUpdatePlanFree);
+                                                                } else {
+                                                                    console.log(
+                                                                        '결제 실패처리 완료.',
+                                                                        resultsUpdateFailed,
+                                                                        resultsUpdatePlanFree,
+                                                                    );
+                                                                }
+                                                            },
+                                                        );
+                                                    }
+                                                });
+                                            });
+                                        }
                                     });
+                                } else {
+                                    console.log('----점검시간----');
+                                }
                             });
+                            updateCounts = 0;
                         }
+
                         // 날짜 갱신
                         this.currentDate = updatedDate;
-                    }, 60 * 1000 * 10);
+                        updateCounts++;
+                    }, 1000 * 1);
             },
             (err) => {
                 console.error(err);
@@ -513,6 +722,6 @@ const updateSubscription = {
     },
 };
 
-updateSubscription.getTodayLists();
+updateSubscription.startService();
 
 module.exports = router;
