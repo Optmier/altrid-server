@@ -44,24 +44,30 @@ router.get('/order-history/current-valid', useAuthCheck, (req, res, next) => {
                 res.status(400).json(errorPlanDur);
             } else {
                 if (resultsPlanDur && resultsPlanDur.length > 0) {
+                    const currentDateTime = new Date().format('yyyy-MM-dd HH:mm:ss');
                     let nextDate = '';
+                    let nextDateTime = '';
                     // 플랜 이용 기간이 30일, 한달이면
                     resultsPlanDur[0].duration = 30;
                     if (resultsPlanDur[0].duration === 30) {
                         nextDate += `DATE_ADD(plan_start, INTERVAL 1 MONTH)`;
+                        nextDateTime += `DATE_ADD(DATE_ADD(plan_start, INTERVAL 1 MONTH), INTERVAL 18 HOUR)`;
                     } else {
                         nextDate += `DATE_ADD(plan_start, INTERVAL ${resultsPlanDur[0].duration} DAY)`;
+                        nextDateTime += `DATE_ADD(DATE_ADD(plan_start, INTERVAL ${resultsPlanDur[0].duration} DAY), INTERVAL 18 HOUR)`;
                     }
 
                     const validPlanSql = `SELECT *, ${nextDate} AS billing_date FROM order_history WHERE academy_code='${academyCode}' 
-                    AND (DATE(plan_start) <= CURDATE() AND CURDATE() < ${nextDate})`;
+                    AND (TIMESTAMP(plan_start) <= TIMESTAMP('${currentDateTime}') AND TIMESTAMP('${currentDateTime}') < ${nextDateTime}) AND payment_status IS NULL`;
 
                     connection.query(validPlanSql, (errorValidPlan, resultsValidPlan) => {
                         connection.release();
                         if (errorValidPlan) {
                             res.status(400).json(errorValidPlan);
                         } else {
-                            res.json(resultsValidPlan);
+                            if (resultsValidPlan.length < 1) {
+                                res.json(resultsValidPlan);
+                            } else res.json(resultsValidPlan);
                         }
                     });
                 } else {
@@ -87,7 +93,7 @@ router.post('/order-history', useAuthCheck, (req, res, next) => {
     dbctrl((connection) => {
         connection.query(
             addPlanOrderSql,
-            [orderNo, planId, academyCode, orderPrice, paymentPrice, planStartDate, billingDay, planId, 0],
+            [orderNo, planId, academyCode, orderPrice, paymentPrice, planStartDate, billingDay, planId, null],
             (errorAddPlan, resultsAddPlan) => {
                 if (errorAddPlan) {
                     connection.release();
