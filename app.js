@@ -26,6 +26,7 @@ const datasForAnalytics = require('./routes/datas_for_analytics');
 const gooroomeeMeetingRoom = require('./routes/meeting_room');
 const myPage = require('./routes/my_page');
 const others = require('./routes/others');
+const planInfo = require('./routes/plan_info');
 const payments = require('./routes/payments');
 const secret = require('./configs/encryptionKey').certsPassword;
 
@@ -91,6 +92,8 @@ app.use('/payments', payments);
 app.use('/my-page', myPage);
 // 기타
 app.use('/others', others);
+// 회원별 플랜 정보
+app.use('/plan-info', planInfo);
 
 app.io = indexRouter.io;
 
