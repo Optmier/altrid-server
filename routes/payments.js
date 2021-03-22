@@ -30,6 +30,64 @@ const toTimestamp = (isoDateStr) => {
     return original.replace('T', ' ').substring(0, decimalStarts);
 };
 
+const makePlanOrderName = (month, planId, lang = 'ko') => {
+    const plans = planId === 2 ? 'standard' : planId === 3 ? 'premium' : 'free';
+    switch (lang) {
+        case 'en':
+            return `${month}월 ${plans} 플랜 이용료`;
+        default:
+            return `${month}월 ${plans} 플랜 이용료`;
+    }
+};
+
+// 플랜 내역 조회
+router.get('/order-history', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+
+    // 플랜 메뉴에서 이용기간 조회
+    const planDurSql = `SELECT duration FROM plan_menus`;
+    dbctrl((connection) => {
+        connection.query(planDurSql, (errorPlanDur, resultsPlanDur) => {
+            if (errorPlanDur) {
+                connection.release();
+                res.status(400).json(errorPlanDur);
+            } else {
+                if (resultsPlanDur && resultsPlanDur.length > 0) {
+                    const currentDateTime = new Date().format('yyyy-MM-dd HH:mm:ss');
+                    let nextDate = '';
+                    let nextDateTime = '';
+                    // 플랜 이용 기간이 30일, 한달이면
+                    resultsPlanDur[0].duration = 30;
+                    if (resultsPlanDur[0].duration === 30) {
+                        nextDate += `DATE_ADD(plan_start, INTERVAL 1 MONTH)`;
+                        nextDateTime += `DATE_ADD(DATE_ADD(plan_start, INTERVAL 1 MONTH), INTERVAL 18 HOUR)`;
+                    } else {
+                        nextDate += `DATE_ADD(plan_start, INTERVAL ${resultsPlanDur[0].duration} DAY)`;
+                        nextDateTime += `DATE_ADD(DATE_ADD(plan_start, INTERVAL ${resultsPlanDur[0].duration} DAY), INTERVAL 18 HOUR)`;
+                    }
+
+                    const validPlanSql = `SELECT *, ${nextDate} AS billing_date, DATE_SUB(${nextDate}, INTERVAL 1 DAY) AS plan_end FROM order_history WHERE academy_code='${academyCode}' 
+                    AND (TIMESTAMP(plan_start) <= TIMESTAMP('${currentDateTime}') AND TIMESTAMP('${currentDateTime}') < ${nextDateTime}) AND payment_status IS NULL`;
+
+                    connection.query(validPlanSql, (errorValidPlan, resultsValidPlan) => {
+                        connection.release();
+                        if (errorValidPlan) {
+                            res.status(400).json(errorValidPlan);
+                        } else {
+                            if (resultsValidPlan.length < 1) {
+                                res.json(resultsValidPlan);
+                            } else res.json(resultsValidPlan);
+                        }
+                    });
+                } else {
+                    connection.release();
+                    res.status(400).json(resultsPlanDur);
+                }
+            }
+        });
+    });
+});
+
 // 현재 학원의 유효한 플랜 검사
 router.get('/order-history/current-valid', useAuthCheck, (req, res, next) => {
     const academyPlanId = req.query.planId;
@@ -57,7 +115,7 @@ router.get('/order-history/current-valid', useAuthCheck, (req, res, next) => {
                         nextDateTime += `DATE_ADD(DATE_ADD(plan_start, INTERVAL ${resultsPlanDur[0].duration} DAY), INTERVAL 18 HOUR)`;
                     }
 
-                    const validPlanSql = `SELECT *, ${nextDate} AS billing_date FROM order_history WHERE academy_code='${academyCode}' 
+                    const validPlanSql = `SELECT *, ${nextDate} AS billing_date, DATE_SUB(${nextDate}, INTERVAL 1 DAY) AS plan_end FROM order_history WHERE academy_code='${academyCode}' 
                     AND (TIMESTAMP(plan_start) <= TIMESTAMP('${currentDateTime}') AND TIMESTAMP('${currentDateTime}') < ${nextDateTime}) AND payment_status IS NULL`;
 
                     connection.query(validPlanSql, (errorValidPlan, resultsValidPlan) => {
@@ -83,8 +141,8 @@ router.get('/order-history/current-valid', useAuthCheck, (req, res, next) => {
 router.post('/order-history', useAuthCheck, (req, res, next) => {
     const { orderNo, planId, orderPrice, paymentPrice, startDate } = req.body;
     const academyCode = req.verified.academyCode;
-    const addPlanOrderSql = `INSERT INTO order_history (no, plan_id, academy_code, order_price, payment_price, plan_start, billing_day, next_plan_id, payment_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const addPlanOrderSql = `INSERT INTO order_history (no, name, plan_id, academy_code, order_price, payment_price, plan_start, billing_day, next_plan_id, payment_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const planStartDate = new Date(startDate).eliminateTime();
     const currentDay = planStartDate.getDate();
@@ -93,7 +151,18 @@ router.post('/order-history', useAuthCheck, (req, res, next) => {
     dbctrl((connection) => {
         connection.query(
             addPlanOrderSql,
-            [orderNo, planId, academyCode, orderPrice, paymentPrice, planStartDate, billingDay, planId, null],
+            [
+                orderNo,
+                makePlanOrderName(planStartDate.getMonth() + 1, planId),
+                planId,
+                academyCode,
+                orderPrice,
+                paymentPrice,
+                planStartDate,
+                billingDay,
+                planId,
+                null,
+            ],
             (errorAddPlan, resultsAddPlan) => {
                 if (errorAddPlan) {
                     connection.release();
@@ -153,6 +222,25 @@ router.post('/coupon-menus', useAuthCheck, (req, res, next) => {
     const couponLists = req.body.couponLists;
     const coupons = couponLists.map((d) => [d.id, d.academyCode]);
     const giveCouponsSql = `INSERT INTO coupon_menus `;
+});
+
+router.get('/coupon-history', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+
+    const getCouponHistorySql = `SELECT coupon_history.*, coupon_menus.name, coupon_menus.discount, coupon_menus.type, coupon_menus.applied_plan, coupon_menus.expired FROM coupon_history
+    JOIN coupon_menus ON coupon_history.coupon_id=coupon_menus.coupon_id
+    WHERE coupon_history.academy_code='${academyCode}'`;
+
+    dbctrl((connection) => {
+        connection.query(getCouponHistorySql, (errGetCouponHistory, resultsCouponHistory) => {
+            connection.release();
+            if (errGetCouponHistory) {
+                res.status(400).json(errGetCouponHistory);
+            } else {
+                res.json(resultsCouponHistory);
+            }
+        });
+    });
 });
 
 // 쿠폰 사용자 발급 (중복 검사)
@@ -322,6 +410,59 @@ router.post('/:payment_key/cancel', (req, res, next) => {
                     .catch((cancelError) => {
                         console.error(cancelError);
                     });
+            }
+        });
+    });
+});
+
+// 결제 내역 조회
+router.get('/payment-history', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+    const getHistorySql = `SELECT
+            payment_history.*,
+            order_history.name,
+            order_history.plan_start,
+            DATE_SUB(
+                IF(
+                    plan_menus.duration = 30,
+                    IF(
+                        DAY(order_history.plan_start) >= 28,
+                        LAST_DAY(
+                            order_history.plan_start + INTERVAL 1 MONTH
+                        ),
+                        DATE_ADD(
+                            order_history.plan_start,
+                            INTERVAL +1 MONTH
+                        )
+                    ),
+                    DATE_ADD(
+                        order_history.plan_start,
+                        INTERVAL plan_menus.duration DAY
+                    )
+                ),
+                INTERVAL 1 DAY
+            ) AS plan_end,
+            plan_menus.duration
+        FROM
+            payment_history
+        JOIN
+            order_history
+        ON
+            payment_history.order_no = order_history.no
+        JOIN
+            plan_menus
+        ON
+            order_history.plan_id = plan_menus.idx
+        WHERE
+            order_history.academy_code = '${academyCode}'`;
+
+    dbctrl((connection) => {
+        connection.query(getHistorySql, (errorGetHistory, resultsGetHistory) => {
+            connection.release();
+            if (errorGetHistory) {
+                res.status(400).json(errorGetHistory);
+            } else {
+                res.json(resultsGetHistory);
             }
         });
     });
@@ -535,7 +676,6 @@ const updateSubscription = {
                                         // console.log(currentOrder.billing_key, currentOrder.customer_key);
                                         // 빌링키가 있는 경우에만 결제 (없는 경우는 보류하고 넘김)
                                         if (currentOrder.billing_key && currentOrder.customer_key) {
-                                            console.log('innerinner!!');
                                             axios
                                                 .post(
                                                     `${tossPaymentsApiUrl}/v1/billing/${currentOrder.billing_key}`,
@@ -573,73 +713,135 @@ const updateSubscription = {
                                                         balanceAmount,
                                                         status,
                                                         approvedAt,
+                                                        method,
                                                         card,
                                                     } = res.data;
+                                                    console.log(res.data);
                                                     dbctrl((connection) => {
-                                                        // 주문 내역에 결제 사항 업데이트
-                                                        console.log(this.todayLists, orderId);
-                                                        const updateOrdersSql = `UPDATE order_history SET order_price=${this.todayLists[orderId].order_price}, payment_price=${balanceAmount}, payment_status='${paymentKey}'
+                                                        // 결제 완료 내역 추가
+                                                        const addPaymentsHistorySql = `INSERT INTO payment_history (order_no, payment_key, approved_at, payment_method, card_company, card_type, card_owner, card_number, payment_price, receipt_url)
+                                                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                                                        connection.query(
+                                                            addPaymentsHistorySql,
+                                                            [
+                                                                orderId,
+                                                                paymentKey,
+                                                                new Date(approvedAt).format('yyyy-MM-dd HH:mm:ss'),
+                                                                method,
+                                                                card.company,
+                                                                card.cardType,
+                                                                card.ownerType,
+                                                                card.number,
+                                                                balanceAmount,
+                                                                card.receiptUrl,
+                                                            ],
+                                                            (errorAddPaymentHistory, resultsAddPaymentHistory) => {
+                                                                if (errorAddPaymentHistory) {
+                                                                    connection.release();
+                                                                    console.error(
+                                                                        '결제 내역을 추가하는 도중 오류가 발생했습니다!',
+                                                                        errorAddPaymentHistory,
+                                                                    );
+                                                                } else {
+                                                                    console.log('주문건 ' + orderId + ' 에 대한 결제 완료 내역이 추가됨!');
+                                                                    // 주문 내역에 결제 사항 업데이트
+                                                                    const updateOrdersSql = `UPDATE order_history SET order_price=${this.todayLists[orderId].order_price}, payment_price=${balanceAmount}, payment_status='${paymentKey}'
                                                         WHERE no='${orderId}'`;
-                                                        connection.query(updateOrdersSql, (errorUpdateOrders, resultsUpdateOrders) => {
-                                                            if (errorUpdateOrders) {
-                                                                connection.release();
-                                                                console.error(
-                                                                    '결제 정보를 업데이트 하는 도중 오류가 발생했습니다!',
-                                                                    errorUpdateOrders,
-                                                                );
-                                                            } else {
-                                                                // 다음 플랜 내역 추가 및 업데이트 (다음 플랜 아이디가 스탠다드나 프리미엄일때, 그리고 결제가 18시 전까지 정상적으로 처리된 경우에 한해서만)
-                                                                const generateUid = new shortUniqueId();
-                                                                const newOrderNo = new Date().getTime() + '_' + generateUid(11);
-                                                                const newPlanId = this.todayLists[orderId].next_plan_id;
-                                                                const newAcademyCode = this.todayLists[orderId].academy_code;
-                                                                const newPlanStart = this.currentDate.format('yyyy-MM-dd HH:mm:ss');
-                                                                const newBillingDay = this.todayLists[orderId].billing_day;
-                                                                const newNextPlanId = newPlanId;
-                                                                const newPaymentStatus = null;
+                                                                    connection.query(
+                                                                        updateOrdersSql,
+                                                                        (errorUpdateOrders, resultsUpdateOrders) => {
+                                                                            if (errorUpdateOrders) {
+                                                                                connection.release();
+                                                                                console.error(
+                                                                                    '결제 정보를 업데이트 하는 도중 오류가 발생했습니다!',
+                                                                                    errorUpdateOrders,
+                                                                                );
+                                                                            } else {
+                                                                                // 다음 플랜 내역 추가 및 업데이트 (다음 플랜 아이디가 스탠다드나 프리미엄일때, 그리고 결제가 18시 전까지 정상적으로 처리된 경우에 한해서만)
+                                                                                const generateUid = new shortUniqueId();
+                                                                                const newOrderNo =
+                                                                                    new Date().getTime() + '_' + generateUid(11);
+                                                                                const newPlanId = this.todayLists[orderId].next_plan_id;
+                                                                                const newOrderName = makePlanOrderName(
+                                                                                    this.currentDate.getMonth() + 1,
+                                                                                    newPlanId,
+                                                                                );
+                                                                                const newAcademyCode = this.todayLists[orderId]
+                                                                                    .academy_code;
+                                                                                const newPlanStart = this.currentDate.format(
+                                                                                    'yyyy-MM-dd HH:mm:ss',
+                                                                                );
+                                                                                const newBillingDay = this.todayLists[orderId].billing_day;
+                                                                                const newNextPlanId = newPlanId;
+                                                                                const newPaymentStatus = null;
 
-                                                                if (
-                                                                    this.todayLists[orderId].payment_status === 'failed' ||
-                                                                    newPlanId === 1
-                                                                ) {
-                                                                    console.log(
-                                                                        orderId +
-                                                                            ' 주문건은 이전 결제 실패 이력이 있거나 다음 플랜이 무료 이므로 다음 구독 정보가 추가되지 않습니다.',
+                                                                                if (
+                                                                                    this.todayLists[orderId].payment_status === 'failed' ||
+                                                                                    newPlanId === 1
+                                                                                ) {
+                                                                                    console.log(
+                                                                                        orderId +
+                                                                                            ' 주문건은 이전 결제 실패 이력이 있거나 다음 플랜이 무료 이므로 다음 구독 정보가 추가되지 않습니다.',
+                                                                                    );
+                                                                                    // 그 중 다음이 무료 플랜이면 학원 플랜 아이디만 업데이트 할 것.
+                                                                                    if (newPlanId === 1) {
+                                                                                        const updateAcademyFreePlanSql = `UPDATE academies SET plan_id=1`;
+                                                                                        connection.query(
+                                                                                            updateAcademyFreePlanSql,
+                                                                                            (errorUpdate, resultsUpdate) => {
+                                                                                                connection.release();
+                                                                                                if (errorUpdate) {
+                                                                                                    console.error(
+                                                                                                        '학원 플랜 아이디 무료 버전으로 업데이트 도중 에러',
+                                                                                                        errorUpdate,
+                                                                                                    );
+                                                                                                } else {
+                                                                                                    console.log(
+                                                                                                        '학원 무료 플랜으로 아이디 설정됨!',
+                                                                                                    );
+                                                                                                }
+                                                                                            },
+                                                                                        );
+                                                                                    }
+                                                                                } else {
+                                                                                    const addNextPlanSql = `INSERT INTO order_history (no, name, plan_id, academy_code, plan_start, billing_day, next_plan_id, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?);
+                                                                    UPDATE academies SET plan_id=${newNextPlanId}`;
+
+                                                                                    connection.query(
+                                                                                        addNextPlanSql,
+                                                                                        [
+                                                                                            newOrderNo,
+                                                                                            newOrderName,
+                                                                                            newPlanId,
+                                                                                            newAcademyCode,
+                                                                                            newPlanStart,
+                                                                                            newBillingDay,
+                                                                                            newNextPlanId,
+                                                                                            newPaymentStatus,
+                                                                                        ],
+                                                                                        (errorAddNextPlan, resultsAddNextPlan) => {
+                                                                                            connection.release();
+                                                                                            if (errorAddNextPlan) {
+                                                                                                console.error(
+                                                                                                    '결제 정보를 업데이트 하는 도중 오류가 발생했습니다!',
+                                                                                                    errorAddNextPlan,
+                                                                                                );
+                                                                                            } else {
+                                                                                                delete this.todayLists[orderId];
+                                                                                                console.log(
+                                                                                                    '모든 프로세스 성공적으로 완료됨!',
+                                                                                                    resultsAddNextPlan,
+                                                                                                );
+                                                                                            }
+                                                                                        },
+                                                                                    );
+                                                                                }
+                                                                            }
+                                                                        },
                                                                     );
                                                                 }
-
-                                                                const addNextPlanSql = `INSERT INTO order_history (no, plan_id, academy_code, plan_start, billing_day, next_plan_id, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?);
-                                                                UPDATE academies SET plan_id=${newNextPlanId}`;
-
-                                                                connection.query(
-                                                                    addNextPlanSql,
-                                                                    [
-                                                                        newOrderNo,
-                                                                        newPlanId,
-                                                                        newAcademyCode,
-                                                                        newPlanStart,
-                                                                        newBillingDay,
-                                                                        newNextPlanId,
-                                                                        newPaymentStatus,
-                                                                    ],
-                                                                    (errorAddNextPlan, resultsAddNextPlan) => {
-                                                                        connection.release();
-                                                                        if (errorAddNextPlan) {
-                                                                            console.error(
-                                                                                '결제 정보를 업데이트 하는 도중 오류가 발생했습니다!',
-                                                                                errorAddNextPlan,
-                                                                            );
-                                                                        } else {
-                                                                            delete this.todayLists[orderId];
-                                                                            console.log(
-                                                                                '모든 프로세스 성공적으로 완료됨!',
-                                                                                resultsAddNextPlan,
-                                                                            );
-                                                                        }
-                                                                    },
-                                                                );
-                                                            }
-                                                        });
+                                                            },
+                                                        );
                                                     });
                                                 })
                                                 .catch((err) => {
