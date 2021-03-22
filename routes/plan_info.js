@@ -2,13 +2,21 @@ var express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
-// 1. stdNums : 학원별 학생 인원
+// 1. stdNums : 선생님별 학생 인원
 router.get('/students-num', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
+    const teacher_id = req.verified.authId;
 
-    let sql = `SELECT COUNT(DISTINCT student_id) AS studentNums
-                FROM students_in_class
-                WHERE academy_code = '${academy_code}'`;
+    let sql = `SELECT
+                    COUNT(DISTINCT student_id) AS studentNums
+                FROM
+                    students_in_class AS sic
+                JOIN
+                    classes AS c
+                ON
+                    sic.class_code = c.class_code
+                WHERE
+                    sic.academy_code = '${academy_code}' AND c.teacher_id = '${teacher_id}'`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
