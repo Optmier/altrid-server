@@ -19,6 +19,8 @@ const mime = {
 const dirContentsRequests = path.join(__dirname.replace('/routes', ''), 'UploadedFiles/ContentsRequests');
 // 프로필 이미지 저장 경로
 const dirProfileImages = path.join(__dirname.replace('/routes', ''), 'UploadedFiles/ProfileImages');
+// Temp
+const dirTMP = path.join(__dirname.replace('/routes', ''), 'UploadedFiles/TMP');
 
 // 컨텐츠 요청 파일 저장
 const uploadContentsRequests = multer({
@@ -89,6 +91,23 @@ router.get('/requests-contents/*', useAuthCheck, (req, res, next) => {
 router.get('/profile-images/*', (req, res, next) => {
     const file = decodeURI(path.join(dirProfileImages, req.path.replace('/profile-images', '')));
     if (file.indexOf(dirProfileImages + path.sep) !== 0) {
+        return res.status(403).end('Forbidden');
+    }
+    const type = mime[path.extname(file).slice(1)] || 'image/jpeg';
+    const s = fs.createReadStream(file);
+    s.on('open', () => {
+        res.set('Content-Type', type);
+        s.pipe(res);
+    });
+    s.on('error', () => {
+        res.set('Content-Type', 'image/jpeg');
+        res.status(404).end('Not found');
+    });
+});
+
+router.get('/tmp/*', (req, res, next) => {
+    const file = decodeURI(path.join(dirTMP, req.path.replace('/tmp', '')));
+    if (file.indexOf(dirTMP + path.sep) !== 0) {
         return res.status(403).end('Forbidden');
     }
     const type = mime[path.extname(file).slice(1)] || 'image/jpeg';
