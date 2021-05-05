@@ -100,4 +100,30 @@ router.get('/assignment-actived', useAuthCheck, (req, res, next) => {
     });
 });
 
+//5. teacherNums, academyCode: 로그인 전, 학원 구독 정봐와 선생님 수
+router.get('/login-planId/:academyCode', (req, res, next) => {
+    const academyCode = req.params.academyCode;
+
+    let sql = `SELECT
+                    COUNT(*) AS teacherNums,
+                    a.code as academyCode,
+                    a.plan_id AS planId
+                FROM
+                    teachers AS t
+                JOIN
+                    academies AS a
+                ON
+                    t.academy_code = a.code
+                WHERE
+                    academy_code = '${academyCode}'`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 module.exports = router;
