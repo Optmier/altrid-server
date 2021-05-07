@@ -802,7 +802,7 @@ WHERE no='${orderId}'`;
                         // console.log(res);
 
                         // 30분 마다 체크
-                        if (updateCounts >= 5) {
+                        if (updateCounts >= (process.env.RUN_MODE === 'dev' ? 5 : 180)) {
                             console.log('updating metas interval...');
                             console.log(this.todayLists);
                             this.getTodayLists((res) => {
@@ -970,7 +970,7 @@ WHERE no='${orderId}'`;
                         // 날짜 갱신
                         this.currentDate = updatedDate;
                         updateCounts++;
-                    }, 1000 * 3);
+                    }, 1000 * (process.env.RUN_MODE === 'dev' ? 3 : 10));
             },
             (err) => {
                 console.error(err);
