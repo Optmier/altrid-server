@@ -49,9 +49,12 @@ router.get('/assignment-drafts', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
 
-    let sql = `SELECT COUNT(*) as fileCounts
-                FROM assignment_draft
-                WHERE file_url IS NOT NULL AND teacher_id = '${teacher_id}' AND created <(
+    let sql = `SELECT
+                    COUNT(*) AS fileCounts
+                FROM
+                    assignment_draft
+                WHERE
+                    file_url IS NOT NULL AND teacher_id = '${teacher_id}' AND created <(
                     SELECT
                         IF(
                             DAY(plan_start) >= 28,
@@ -62,13 +65,19 @@ router.get('/assignment-drafts', useAuthCheck, (req, res, next) => {
                         order_history
                     WHERE
                         academy_code = '${academy_code}'
+                    ORDER BY
+                        plan_start
+                    DESC
+                LIMIT 1
                 ) AND created >=(
                 SELECT
                     plan_start
                 FROM
                     order_history
                 WHERE
-                    academy_code = '${academy_code}')`;
+                    academy_code = '${academy_code}'
+                ORDER BY
+                    plan_start DESC LIMIT 1)`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
