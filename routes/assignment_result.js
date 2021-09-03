@@ -215,7 +215,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const eyetrack = req.body.eyetrack;
     const studentId = req.verified.authId;
 
-    let sql = `SELECT COUNT(*) AS is_exists, user_data, eyetrack_data, tries, is_submitted, time FROM assignment_result WHERE actived_number=${activedNumber} && student_id='${studentId}'`;
+    let sql = `SELECT COUNT(*) AS is_exists, user_data, eyetrack_data, tries, is_submitted, time, vocas FROM assignment_result WHERE actived_number=${activedNumber} && student_id='${studentId}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, res1, fields) => {
             console.log(res1);
@@ -272,9 +272,10 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     const numOfRegs = req.body.numOfRegs;
     const time = req.body.time;
     const isSubmitted = req.body.isSubmitted;
+    const vocas = req.body.vocas;
 
     let sql = `UPDATE assignment_result 
-    SET score_percentage=${scorePercentage}, score_points=${scorePoints}, user_data='${userData}', eyetrack_data='${eyetrackData}', num_of_fixs=${numOfFixs}, avg_of_fix_durs=${avgOfFixDurs}, avg_of_fix_vels=${avgOfFixVels}, num_of_sacs=${numOfSacs}, var_of_sac_vels=${varOfSacVels}, cluster_area=${clusterArea}, cluster_counts=${clusterCounts}, num_of_regs=${numOfRegs}, time=${time}, is_submitted=${isSubmitted} 
+    SET score_percentage=${scorePercentage}, score_points=${scorePoints}, user_data='${userData}', eyetrack_data='${eyetrackData}', num_of_fixs=${numOfFixs}, avg_of_fix_durs=${avgOfFixDurs}, avg_of_fix_vels=${avgOfFixVels}, num_of_sacs=${numOfSacs}, var_of_sac_vels=${varOfSacVels}, cluster_area=${clusterArea}, cluster_counts=${clusterCounts}, num_of_regs=${numOfRegs}, time=${time}, is_submitted=${isSubmitted}, vocas='${vocas}'
     WHERE actived_number=${activedNumber} && student_id='${studentId}'`;
 
     dbctrl((connection) => {
