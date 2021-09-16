@@ -26,7 +26,7 @@ router.get('/:id', useAuthCheck, (req, res, next) => {
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
-            console.log(results);
+            // console.log(results);
             if (error) res.status(400).json(error);
             else res.json(results[0]);
         });
@@ -39,7 +39,7 @@ router.patch('/:id', useAuthCheck, (req, res, next) => {
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
     let data = req.body.contentsData.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'");
-    console.log(data);
+    // console.log(data);
     let sql = `UPDATE assignment_draft SET contents_data='${data}' WHERE idx=${req.params.id}`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {

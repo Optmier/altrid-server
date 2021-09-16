@@ -64,7 +64,7 @@ router.get('/contents-data/:actived_number', useAuthCheck, (req, res, next) => {
             connection.release();
             if (error) res.status(400).json(error);
             else {
-                console.log(results[0]);
+                // console.log(results[0]);
                 res.json(results[0]);
             }
         });
@@ -187,7 +187,7 @@ router.get('/', useAuthCheck, (req, res, next) => {
     // if(limit !== undefined && limit !== null && offset !== undefined && offset !== null) sql += ` LIMIT ${limit} OFFSET ${offset}`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
-            console.log(results);
+            // console.log(results);
             connection.release();
             if (error) res.status(400).json(error);
             else {
@@ -218,7 +218,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     let sql = `SELECT COUNT(*) AS is_exists, user_data, eyetrack_data, tries, is_submitted, time, vocas FROM assignment_result WHERE actived_number=${activedNumber} && student_id='${studentId}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, res1, fields) => {
-            console.log(res1);
+            // console.log(res1);
             if (error) {
                 connection.release();
                 res.status(400).json(error);
