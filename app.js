@@ -28,6 +28,7 @@ const myPage = require('./routes/my_page');
 const others = require('./routes/others');
 const planInfo = require('./routes/plan_info');
 const payments = require('./routes/payments');
+const optimer = require('./routes/optimer');
 const secret = require('./configs/encryptionKey').certsPassword;
 
 var app = express();
@@ -94,6 +95,8 @@ app.use('/my-page', myPage);
 app.use('/others', others);
 // 회원별 플랜 정보
 app.use('/plan-info', planInfo);
+// 학습타이머
+app.use('/optimer', optimer);
 
 app.io = indexRouter.io;
 
