@@ -29,6 +29,7 @@ const others = require('./routes/others');
 const planInfo = require('./routes/plan_info');
 const payments = require('./routes/payments');
 const handsUp = require('./routes/hands-up');
+const optimer = require('./routes/optimer');
 const secret = require('./configs/encryptionKey').certsPassword;
 
 var app = express();
@@ -97,6 +98,8 @@ app.use('/others', others);
 app.use('/plan-info', planInfo);
 // 손들기 기능
 app.use('/hands-up', handsUp);
+// 학습타이머
+app.use('/optimer', optimer);
 
 app.io = indexRouter.io;
 
