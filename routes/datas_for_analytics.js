@@ -36,7 +36,7 @@ const getDraftId = (activedNumber) => {
     });
 };
 
-const getDatasForAnalytics = (userId, userData, eyetrackData) => {
+const getDatasForAnalytics = (userId, userData, eyetrackData, activedNumber) => {
     const results = []; // 최종 결과 데이터
     const _groupedEyetrackData = []; // 문제 번호로 그룹화 된 시선추적 데이터
     const _groupedUserData = []; // 문제 번호로 그룹화 된 사용자 데이터
@@ -181,22 +181,56 @@ const getDatasForAnalytics = (userId, userData, eyetrackData) => {
             _eyetrackStates[idx].avgOfFixVels,
             _eyetrackStates[idx].numOfSacs,
             _eyetrackStates[idx].varOfSacVels,
+            activedNumber,
+            data.starred,
         ]);
     });
     return results;
 };
 
 router.post('/', useAuthCheck, (req, res, next) => {
-    const { userData, eyetrackData } = req.body;
+    const { activedNumber, userData, eyetrackData } = req.body;
     const authId = req.verified.authId;
     // 데이터 추출 함수 만들고 불러와서 결과 데이터 저장
-    let datas = getDatasForAnalytics(authId, userData, eyetrackData);
-    let sql = `INSERT INTO datas_for_analytics (student_id, passage_id, question_id, question_category, correction, spent_time, changes, num_of_fixs, avg_of_fix_durs, avg_of_fix_vels, num_of_sacs, var_of_sac_vels) VALUES ?`;
+    let datas = getDatasForAnalytics(authId, userData, eyetrackData, activedNumber);
+    let sql = `INSERT INTO datas_for_analytics (student_id, passage_id, question_id, question_category, correction, spent_time, changes, num_of_fixs, avg_of_fix_durs, avg_of_fix_vels, num_of_sacs, var_of_sac_vels, assignment_number, user_status) VALUES ?`;
     dbctrl((connection) => {
         connection.query(sql, [datas], (error, results, fields) => {
             connection.release();
             if (error) res.status(400).json(error);
             else res.status(201).json(results);
+        });
+    });
+});
+
+router.patch('/', useAuthCheck, (req, res, next) => {
+    const { assignmentNo, questionIds, isHandsUp } = req.body;
+    const authId = req.verified.authId;
+    console.log(assignmentNo, questionIds, isHandsUp, authId);
+    const inqIds = questionIds.map((id) => `'${id}'`).join(',');
+    console.log(inqIds);
+    const sql = isHandsUp
+        ? `UPDATE datas_for_analytics
+                    SET user_status
+                                =CASE WHEN user_status=0 
+                                    THEN 2 
+                                    ELSE 3
+                                END
+                    WHERE assignment_number=${assignmentNo} AND student_id='${authId}'
+                    AND question_id IN (${inqIds})`
+        : `UPDATE datas_for_analytics
+                    SET user_status
+                                =CASE WHEN user_status=2 
+                                    THEN 0 
+                                    ELSE 1
+                                END
+                    WHERE assignment_number=${assignmentNo} AND student_id='${authId}'
+                    AND question_id IN (${inqIds})`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
         });
     });
 });
