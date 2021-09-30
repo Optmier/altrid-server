@@ -193,7 +193,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const authId = req.verified.authId;
     // 데이터 추출 함수 만들고 불러와서 결과 데이터 저장
     let datas = getDatasForAnalytics(authId, userData, eyetrackData, activedNumber);
-    let sql = `INSERT INTO datas_for_analytics (student_id, passage_id, question_id, question_category, correction, spent_time, changes, num_of_fixs, avg_of_fix_durs, avg_of_fix_vels, num_of_sacs, var_of_sac_vels, assignment_number, user_status) VALUES ?`;
+    let sql = `INSERT INTO datas_for_analytics (student_id, passage_id, question_id, question_category, correction, spent_time, changes, num_of_fixs, avg_of_fix_durs, avg_of_fix_vels, num_of_sacs, var_of_sac_vels, assignment_number, starred) VALUES ?`;
     dbctrl((connection) => {
         connection.query(sql, [datas], (error, results, fields) => {
             connection.release();
@@ -203,27 +203,17 @@ router.post('/', useAuthCheck, (req, res, next) => {
     });
 });
 
-router.patch('/', useAuthCheck, (req, res, next) => {
+router.patch('/hands-up', useAuthCheck, (req, res, next) => {
     const { assignmentNo, questionIds, isHandsUp } = req.body;
     const authId = req.verified.authId;
-    console.log(assignmentNo, questionIds, isHandsUp, authId);
     const inqIds = questionIds.map((id) => `'${id}'`).join(',');
-    console.log(inqIds);
     const sql = isHandsUp
         ? `UPDATE datas_for_analytics
-                    SET user_status
-                                =CASE WHEN user_status=0 
-                                    THEN 2 
-                                    ELSE 3
-                                END
+                    SET hands_up=1
                     WHERE assignment_number=${assignmentNo} AND student_id='${authId}'
                     AND question_id IN (${inqIds})`
         : `UPDATE datas_for_analytics
-                    SET user_status
-                                =CASE WHEN user_status=2 
-                                    THEN 0 
-                                    ELSE 1
-                                END
+                    SET hands_up=0
                     WHERE assignment_number=${assignmentNo} AND student_id='${authId}'
                     AND question_id IN (${inqIds})`;
     dbctrl((connection) => {
