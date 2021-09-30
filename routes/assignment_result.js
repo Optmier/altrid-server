@@ -302,4 +302,32 @@ router.delete('/:actived_number/:student_id', useAuthCheck, (req, res, next) => 
     });
 });
 
+/** 선생님 피드백 업데이트 */
+router.patch('/teacher-feedback', useAuthCheck, (req, res, next) => {
+    const { assignmentNum, studentId, contentsData } = req.body;
+    const sql = `UPDATE assignment_result SET teacher_feedback='${contentsData
+        .replace(/\\/gi, '\\\\')
+        .replace(/\'/gi, "\\'")}' WHERE actived_number=${assignmentNum} AND student_id=${studentId}`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
+/** 선생님 피드백 가져오기 */
+router.get('/teacher-feedback/:assignmentNum/:studentId', useAuthCheck, (req, res, next) => {
+    const { assignmentNum, studentId } = req.params;
+    const sql = `SELECT teacher_feedback FROM assignment_result WHERE actived_number=${assignmentNum} AND student_id=${studentId}`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results[0].teacher_feedback);
+        });
+    });
+});
+
 module.exports = router;
