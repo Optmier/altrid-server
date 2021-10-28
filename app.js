@@ -30,6 +30,7 @@ const planInfo = require('./routes/plan_info');
 const payments = require('./routes/payments');
 const handsUp = require('./routes/hands-up');
 const optimer = require('./routes/optimer');
+const vocas = require('./routes/vocas');
 const secret = require('./configs/encryptionKey').certsPassword;
 
 var app = express();
@@ -100,6 +101,8 @@ app.use('/plan-info', planInfo);
 app.use('/hands-up', handsUp);
 // 학습타이머
 app.use('/optimer', optimer);
+// 단어장
+app.use('/vocas', vocas);
 
 app.io = indexRouter.io;
 
