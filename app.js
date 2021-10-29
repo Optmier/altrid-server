@@ -32,6 +32,8 @@ const handsUp = require('./routes/hands-up');
 const optimer = require('./routes/optimer');
 const vocas = require('./routes/vocas');
 const secret = require('./configs/encryptionKey').certsPassword;
+const Word = require('./routes/word');
+const optimer = require('./routes/optimer');
 
 var app = express();
 var cors = require('cors');
@@ -104,7 +106,13 @@ app.use('/optimer', optimer);
 // 단어장
 app.use('/vocas', vocas);
 
+app.use('/word',Word);
+
+app.use('/optimer',  optimer);
 app.io = indexRouter.io;
+
+
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
