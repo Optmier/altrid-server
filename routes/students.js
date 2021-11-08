@@ -27,6 +27,19 @@ router.get('/', useAuthCheck, (req, res, next) => {
     });
 });
 
+/** 현재 학원내 학원생 조회 */
+router.get('/current-academy', useAuthCheck, (req, res, next) => {
+    const { academyCode } = req.verified;
+    const sql = `SELECT * FROM students WHERE academy_code='${academyCode}'`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 /** 특정 학원생 조회 (usertype이 student인 경우에는 자기 자신만 조회 가능) */
 router.get('/:id', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'students' || req.verified.userType !== 'teachers' || req.verified.userType !== 'admins')
