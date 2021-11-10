@@ -14,14 +14,27 @@ Array.prototype.division = function (n) {
     return result;
 };
 
-router.post('/', useAuthCheck, (req, res, next) => {});
+router.post('/', useAuthCheck, (req, res, next) => {
+    const { vocas, assignmentNumber, classNumber } = req.body;
+    const studentId = req.verified.authId;
+    const savedata = vocas.map((d) => [d, studentId, assignmentNumber, classNumber]);
+    const sql = `INSERT INTO vocas (word, student_id, assignment_id, class_number) VALUES ?`;
+
+    dbctrl((connection) => {
+        connection.query(sql, [savedata], (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.status(201).json(results);
+        });
+    });
+});
 
 router.patch('/', useAuthCheck, (req, res, next) => {
     const studentId = req.verified.authId;
-    const { idx, means, dist, counts, completed } = req.body;
+    const { idx, means, dist, counts, completed, classNum } = req.body;
     const sql = `UPDATE vocas SET means=${
         means === null ? `'${means}'` : null
-    }, dist=${dist}, counts=${counts}, completed=${completed} WHERE student_id='${studentId}' AND idx=${idx}`;
+    }, dist=${dist}, counts=${counts}, completed=${completed} WHERE student_id='${studentId}' AND idx=${idx} AND class_number=${classNum}`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -34,7 +47,8 @@ router.patch('/', useAuthCheck, (req, res, next) => {
 
 router.get('/progress', useAuthCheck, (req, res, next) => {
     const studentId = req.verified.authId;
-    const sql = `SELECT COUNT(*) as total, COUNT(IF(dist=2, 1, NULL)) as progress FROM vocas WHERE student_id='${studentId}'`;
+    const { classNum } = req.query;
+    const sql = `SELECT COUNT(*) as total, COUNT(IF(dist=2, 1, NULL)) as progress FROM vocas WHERE student_id='${studentId}' AND class_number=${classNum}`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -48,10 +62,12 @@ router.get('/progress', useAuthCheck, (req, res, next) => {
 router.get('/completed', useAuthCheck, (req, res, next) => {
     // const pagination = 10;
     const studentId = req.verified.authId;
-    const { limit, page } = req.query;
-    const sql = `SELECT * FROM vocas WHERE student_id='${studentId}' AND dist=2 ORDER BY idx LIMIT ${limit ? limit : 0} OFFSET ${
-        page ? page * limit : 0
-    }`;
+    const { limit, page, classNum } = req.query;
+    const sql = `SELECT vocas.*, assignment_draft.title AS assignment_title FROM vocas 
+                LEFT JOIN assignment_draft ON assignment_draft.idx=vocas.assignment_id
+                WHERE vocas.student_id='${studentId}' AND vocas.dist=2 AND vocas.class_number=${classNum} ORDER BY vocas.idx LIMIT ${
+        limit ? limit : 0
+    } OFFSET ${page ? page * limit : 0}`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -64,7 +80,8 @@ router.get('/completed', useAuthCheck, (req, res, next) => {
 
 router.get('/completed/max', useAuthCheck, (req, res, next) => {
     const studentId = req.verified.authId;
-    const sql = `SELECT COUNT(*) AS max FROM vocas WHERE student_id='${studentId}' AND dist=2`;
+    const { classNum } = req.query;
+    const sql = `SELECT COUNT(*) AS max FROM vocas WHERE student_id='${studentId}' AND dist=2 AND class_number=${classNum}`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -72,13 +89,16 @@ router.get('/completed/max', useAuthCheck, (req, res, next) => {
             if (error) res.status(400).json(error);
             else res.json(results[0].max);
         });
+        fffff;
     });
 });
 
 router.get('/completed/search', useAuthCheck, (req, res, next) => {
     const studentId = req.verified.authId;
-    const { q } = req.query;
-    const sql = `SELECT * FROM vocas WHERE student_id='${studentId}' AND dist=2 AND word LIKE '%${q}%' ORDER BY idx`;
+    const { q, classNum } = req.query;
+    const sql = `SELECT vocas.*, assignment_draft.title AS assignment_title FROM vocas
+                LEFT JOIN assignment_draft ON assignment_draft.idx=vocas.assignment_id
+                WHERE vocas.student_id='${studentId}' AND vocas.dist=2 AND vocas.class_number=${classNum} AND vocas.word LIKE '%${q}%' ORDER BY vocas.idx`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -91,8 +111,12 @@ router.get('/completed/search', useAuthCheck, (req, res, next) => {
 
 router.get('/learning-list', useAuthCheck, (req, res, next) => {
     const studentId = req.verified.authId;
-    const { limit } = req.query;
-    const sql = `SELECT * FROM vocas WHERE student_id='${studentId}' AND dist!=2 ORDER BY idx LIMIT ${limit ? limit : 0} OFFSET 0`;
+    const { limit, classNum } = req.query;
+    const sql = `SELECT vocas.*, assignment_draft.title AS assignment_title FROM vocas
+                LEFT JOIN assignment_draft ON assignment_draft.idx=vocas.assignment_id 
+                WHERE vocas.student_id='${studentId}' AND vocas.dist!=2 AND vocas.class_number=${classNum} ORDER BY vocas.idx LIMIT ${
+        limit ? limit : 0
+    } OFFSET 0`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {

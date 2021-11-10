@@ -33,6 +33,7 @@ const optimer = require('./routes/optimer');
 const vocas = require('./routes/vocas');
 const secret = require('./configs/encryptionKey').certsPassword;
 const Word = require('./routes/word');
+const camStudy = require('./routes/cam_study');
 
 var app = express();
 var cors = require('cors');
@@ -105,6 +106,8 @@ app.use('/optimer', optimer);
 // 단어장
 app.use('/vocas', vocas);
 app.use('/word', Word);
+// 캠 스터디
+app.use('/cam-study', camStudy);
 app.io = indexRouter.io;
 
 // catch 404 and forward to error handler

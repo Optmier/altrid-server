@@ -16,6 +16,7 @@ const { verifyToken } = require('../modules/encryption');
 const socketIO = require('socket.io');
 router.io = socketIO();
 const io_vidLecture = router.io.of('/vid_lecture');
+const io_camStudy = router.io.of('cam_study');
 
 const dbPool = mysql.createPool(dbconfig);
 global.dbctrl = (callback) => {
@@ -47,6 +48,32 @@ io_vidLecture.on('connection', (socket) => {
     socket.on('leave', ({ groupId, data }) => {
         console.log('leaved >> ', { groupId, data });
         io_vidLecture.to(groupId).emit('leaved', data);
+        socket.leave(groupId);
+    });
+    socket.on('disconnect', () => {
+        console.log('disconneted');
+    });
+});
+
+io_camStudy.on('connection', (socket) => {
+    console.log('connected!');
+    socket.emit('connected', socket.id);
+    socket.on('join', ({ groupId, data }) => {
+        console.log('joined >> ', { groupId, data });
+        try {
+            socket.join(groupId);
+            io_camStudy.to(groupId).emit('joined', data);
+        } catch (error) {
+            socket.emit('onError', error);
+        }
+    });
+    socket.on('detectEyetrack', ({ groupId, data }) => {
+        console.log(groupId, data);
+        io_camStudy.to(groupId).emit('eyetrackFeedback', data);
+    });
+    socket.on('leave', ({ groupId, data }) => {
+        console.log('leaved >> ', { groupId, data });
+        io_camStudy.to(groupId).emit('leaved', data);
         socket.leave(groupId);
     });
     socket.on('disconnect', () => {
