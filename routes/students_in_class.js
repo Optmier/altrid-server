@@ -107,4 +107,19 @@ router.delete('/students/:class_number', useAuthCheck, (req, res, next) => {
     });
 });
 
+/** 특정 클래스 내 특정 학생 특이사항 업데이트 */
+router.patch('/notes/:class_number/:student_id', useAuthCheck, (req, res, next) => {
+    const { class_number, student_id } = req.params;
+    const { notes } = req.body;
+    const sql = `UPDATE students_in_class SET notes='${notes}' WHERE class_number=${class_number} AND student_id='${student_id}'`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 module.exports = router;
