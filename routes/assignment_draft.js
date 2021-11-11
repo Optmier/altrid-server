@@ -52,7 +52,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
 
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
-    const { title, description, time_limit, eyetrack } = req.body;
+    const { title, description, subject, time_limit, eyetrack } = req.body;
     let { contents_data } = req.body;
 
     if (contents_data !== null) {
@@ -60,10 +60,10 @@ router.post('/', useAuthCheck, (req, res, next) => {
     }
 
     let sql = `INSERT INTO
-                assignment_draft( academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data)
+                assignment_draft( academy_code, teacher_id, title, description, subject, time_limit, eyetrack, contents_data)
                VALUES('${academy_code}','${teacher_id}','${title.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}','${description
         .replace(/\\/gi, '\\\\')
-        .replace(/\'/gi, "\\'")}',${time_limit},${eyetrack},${contents_data})`;
+        .replace(/\'/gi, "\\'")}',${subject},${time_limit},${eyetrack},${contents_data})`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -80,7 +80,7 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
-    const { idx, title, description, time_limit, eyetrack } = req.body;
+    const { idx, title, description, subject, time_limit, eyetrack } = req.body;
     let { contents_data } = req.body;
 
     if (contents_data !== null) {
@@ -92,6 +92,7 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                 SET
                     title = '${title.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
                     description = '${description.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
+                    subject = ${subject}
                     eyetrack = ${eyetrack},
                     time_limit = ${time_limit},
                     contents_data= ${contents_data}
@@ -116,8 +117,8 @@ router.post('/copy/:idx', useAuthCheck, (req, res, next) => {
     const { title } = req.body || '';
 
     let sql = `INSERT IGNORE INTO 
-        assignment_draft (academy_code, teacher_id, title, description, time_limit, eyetrack, contents_data, file_url)
-        SELECT academy_code, teacher_id, '${title}', description, time_limit, eyetrack, contents_data, file_url
+        assignment_draft (academy_code, teacher_id, title, description, subject, time_limit, eyetrack, contents_data, file_url)
+        SELECT academy_code, teacher_id, '${title}', description, subject, time_limit, eyetrack, contents_data, file_url
         FROM assignment_draft WHERE idx=${req.params.idx} ORDER BY idx
     `;
 
