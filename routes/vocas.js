@@ -59,6 +59,20 @@ router.get('/progress', useAuthCheck, (req, res, next) => {
     });
 });
 
+router.get('/random', useAuthCheck, (req, res, next) => {
+    const studentId = req.verified.authId;
+    const { classNum } = req.query;
+    const sql = `SELECT word FROM vocas WHERE student_id = ${studentId} AND class_number = ${classNum} ORDER BY RAND() LIMIT 1`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results[0]);
+        });
+    });
+});
+
 router.get('/completed', useAuthCheck, (req, res, next) => {
     // const pagination = 10;
     const studentId = req.verified.authId;

@@ -118,6 +118,21 @@ router.get('/', useAuthCheck, (req, res, next) => {
     });
 });
 
+// 현재 진행중인 강의
+router.get('/livelecture', useAuthCheck, (req, res, next) => {
+    const classNumber =
+        req.query.classNumber === null || req.query.classNumber === undefined ? '1' : `class_number=${req.query.classNumber}`;
+    const academyCode = req.verified.academyCode;
+    let sql = `SELECT * FROM video_lectures WHERE academy_code = '${academyCode}'  AND ${classNumber} AND NOW() > DATE(start_at) AND NOW() <DATE(end_at) AND force_closed = 0`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 // 미팅룸 가장 최신 항목 가져오기
 router.get('/last', useAuthCheck, (req, res, next) => {
     const creatorId = req.query.creatorId === null || req.query.creatorId === undefined ? '1' : `creator_id='${req.query.creatorId}'`;
