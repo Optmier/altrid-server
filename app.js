@@ -34,6 +34,7 @@ const vocas = require('./routes/vocas');
 const secret = require('./configs/encryptionKey').certsPassword;
 
 const camStudy = require('./routes/cam_study');
+const personalSettings = require('./routes/personal_settings');
 
 var app = express();
 var cors = require('cors');
@@ -107,6 +108,8 @@ app.use('/optimer', optimer);
 app.use('/vocas', vocas);
 // 캠 스터디
 app.use('/cam-study', camStudy);
+// 개인 설정
+app.use('/personal-settings', personalSettings);
 app.io = indexRouter.io;
 
 // catch 404 and forward to error handler

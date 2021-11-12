@@ -41,9 +41,9 @@ router.patch('/', useAuthCheck, (req, res, next) => {
 router.get('/:classNum', useAuthCheck, (req, res, next) => {
     const classNum = req.params.classNum;
     const sql = `SELECT students.name, optimer.* FROM optimer
-                JOIN students_in_class ON optimer.student_id=students_in_class.student_id
+                LEFT JOIN students_in_class ON optimer.student_id=students_in_class.student_id
                 JOIN students ON optimer.student_id=students.auth_id
-                WHERE students_in_class.class_number=${classNum} AND optimer.class_number=${classNum} AND 
+                WHERE optimer.class_number=${classNum} AND 
                 optimer.created >= ADDDATE( CURDATE(), - WEEKDAY(CURDATE()) + 0 ) AND optimer.created < ADDDATE( CURDATE(), - WEEKDAY(CURDATE()) + 7 )
                 ORDER BY time_total DESC`;
 

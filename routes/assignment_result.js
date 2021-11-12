@@ -7,7 +7,7 @@ router.get('/report-students/:class_number', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
         return res.status(403).json({ code: 'not-allowed-user-type', message: 'unauthorized-access :: not allowed user type.' });
 
-    let sql = `SELECT sic.class_number, sic.student_id, s.name, a.title, a.idx AS actived_number, r.idx
+    let sql = `SELECT sic.class_number, sic.student_id, s.name, s.phone, s.address, sic.notes, a.title, a.idx AS actived_number, r.idx
                 FROM students_in_class AS sic
                 INNER JOIN students AS s
                 ON sic.student_id = s.auth_id
