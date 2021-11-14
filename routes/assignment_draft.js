@@ -92,7 +92,7 @@ router.patch('/', useAuthCheck, (req, res, next) => {
                 SET
                     title = '${title.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
                     description = '${description.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
-                    subject = ${subject}
+                    subject = ${subject},
                     eyetrack = ${eyetrack},
                     time_limit = ${time_limit},
                     contents_data= ${contents_data}
