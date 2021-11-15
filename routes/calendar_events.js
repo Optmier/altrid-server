@@ -42,6 +42,7 @@ router.get('/class-shared/:class_num', (req, res, next) => {
 router.post('/students/my', (req, res, next) => {
     const studentId = req.verified.authId;
     const {
+        calId,
         title,
         description,
         starts,
@@ -57,12 +58,12 @@ router.post('/students/my', (req, res, next) => {
         completed,
         classNumber,
     } = req.body;
-    const sql = `INSERT INTO student_calendar_events (title, description, starts, ends, types, all_day, days_of_week, editable, 
+    const sql = `INSERT INTO student_calendar_events (cal_id, title, description, starts, ends, types, all_day, days_of_week, editable, 
                 start_editable, duration_editable, resource_editable, color_sets, completed, student_id, class_number)
-                VALUES ('${title}', '${description}', '${starts}', '${ends}', ${types || 0}, ${allDay || 0}, ${
+                VALUES ('${calId}', '${title}', '${description}', '${starts}', '${ends}', ${types || 0}, ${allDay || 0}, ${
         daysOfWeek ? `'${daysOfWeek}'` : null
     }, ${editable || 0}, 
-                ${startEditable || 0}, ${durationEditable || 0}, ${resourceEditable || 0}, '${colorSets}', ${
+                ${startEditable || 1}, ${durationEditable || 1}, ${resourceEditable || 0}, '${colorSets}', ${
         completed || 0
     }, '${studentId}', ${classNumber})`;
 
@@ -79,6 +80,7 @@ router.post('/students/my', (req, res, next) => {
 router.post('/teachers/my', (req, res, next) => {
     const teacherId = req.verified.authId;
     const {
+        calId,
         title,
         description,
         starts,
@@ -95,12 +97,12 @@ router.post('/teachers/my', (req, res, next) => {
         classNumber,
         shared,
     } = req.body;
-    const sql = `INSERT INTO student_calendar_events (title, description, starts, ends, types, all_day, days_of_week, editable, 
+    const sql = `INSERT INTO student_calendar_events (cal_id, title, description, starts, ends, types, all_day, days_of_week, editable, 
                 start_editable, duration_editable, resource_editable, color_sets, completed, teacher_id, class_number, shared)
-                VALUES ('${title}', '${description}', '${starts}', '${ends}', ${types || 0}, ${allDay || 0}, ${
+                VALUES ('${calId}', '${title}', '${description}', '${starts}', '${ends}', ${types || 0}, ${allDay || 0}, ${
         daysOfWeek ? `'${daysOfWeek}'` : null
     }, ${editable || 0}, 
-                ${startEditable || 0}, ${durationEditable || 0}, ${resourceEditable || 0}, '${colorSets}', ${
+                ${startEditable || 1}, ${durationEditable || 1}, ${resourceEditable || 0}, '${colorSets}', ${
         completed || 0
     }, '${teacherId}', ${classNumber}, ${shared || 0})`;
 
@@ -114,8 +116,9 @@ router.post('/teachers/my', (req, res, next) => {
 });
 
 // 학생 이벤트 수정
-router.patch('/students/my', (req, res, next) => {
+router.patch('/students/my/:cal_id', (req, res, next) => {
     const studentId = req.verified.authId;
+    const { cal_id } = req.params;
     const {
         title,
         description,
@@ -134,7 +137,7 @@ router.patch('/students/my', (req, res, next) => {
     } = req.body;
     const sql = `UPDATE student_calendar_events SET title='${title}', description='${description}', starts='${starts}', ends='${ends}', types=${types}, all_day='${allDay}', days_of_week='${daysOfWeek}', editable=${editable}, 
                 start_editable=${startEditable}, duration_editable=${durationEditable}, resource_editable=${resourceEditable}, color_sets='${colorSets}', completed='${completed}'
-                WHERE student_id='${studentId}' AND class_number=${classNumber}`;
+                WHERE student_id='${studentId}' AND class_number=${classNumber} AND cal_id='${cal_id}'`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -146,8 +149,9 @@ router.patch('/students/my', (req, res, next) => {
 });
 
 // 선생님 이벤트 수정
-router.patch('/teachers/my', (req, res, next) => {
+router.patch('/teachers/my/:cal_id', (req, res, next) => {
     const teacherId = req.verified.authId;
+    const { cal_id } = req.params;
     const {
         title,
         description,
@@ -167,7 +171,7 @@ router.patch('/teachers/my', (req, res, next) => {
     } = req.body;
     const sql = `UPDATE teacher_calendar_events SET title='${title}', description='${description}', starts='${starts}', ends='${ends}', types=${types}, all_day='${allDay}', days_of_week='${daysOfWeek}', editable=${editable}, 
     start_editable=${startEditable}, duration_editable=${durationEditable}, resource_editable=${resourceEditable}, color_sets='${colorSets}', completed='${completed}', shared=${shared}
-    WHERE teacher_id='${teacherId}' AND class_number=${classNumber}`;
+    WHERE teacher_id='${teacherId}' AND class_number=${classNumber} AND cal_id=${cal_id}`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
@@ -179,9 +183,9 @@ router.patch('/teachers/my', (req, res, next) => {
 });
 
 // idx로 이벤트 삭제
-router.delete('/:idx', (req, res, next) => {
-    const { idx } = req.params;
-    const sql = `DELETE FROM student_calendar_events WHERE idx=${idx}`;
+router.delete('/:cal_id', (req, res, next) => {
+    const { cal_id } = req.params;
+    const sql = `DELETE FROM student_calendar_events WHERE cal_id=${cal_id}`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
