@@ -35,6 +35,7 @@ const secret = require('./configs/encryptionKey').certsPassword;
 
 const camStudy = require('./routes/cam_study');
 const personalSettings = require('./routes/personal_settings');
+const calendarEvents = require('./routes/calendar_events');
 
 var app = express();
 var cors = require('cors');
@@ -110,6 +111,8 @@ app.use('/vocas', vocas);
 app.use('/cam-study', camStudy);
 // 개인 설정
 app.use('/personal-settings', personalSettings);
+// 캘린더 이벤트
+app.use('/calendar-events', calendarEvents);
 app.io = indexRouter.io;
 
 // catch 404 and forward to error handler
