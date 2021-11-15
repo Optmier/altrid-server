@@ -32,7 +32,7 @@ const handsUp = require('./routes/hands-up');
 const optimer = require('./routes/optimer');
 const vocas = require('./routes/vocas');
 const secret = require('./configs/encryptionKey').certsPassword;
-const Word = require('./routes/word');
+
 const camStudy = require('./routes/cam_study');
 const personalSettings = require('./routes/personal_settings');
 const calendarEvents = require('./routes/calendar_events');
@@ -107,7 +107,6 @@ app.use('/hands-up', handsUp);
 app.use('/optimer', optimer);
 // 단어장
 app.use('/vocas', vocas);
-app.use('/word', Word);
 // 캠 스터디
 app.use('/cam-study', camStudy);
 // 개인 설정

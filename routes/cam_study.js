@@ -278,6 +278,20 @@ router.get('/total', useAuthCheck, (req, res, next) => {
     });
 });
 
+// 전체 방 불러오기
+router.get('/all', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+    const sql = `SELECT * FROM cam_studies WHERE DATE(session_enddate) > NOW() AND academy_code = '${academyCode}'`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 // 일부 항목 수정하기
 router.patch('/:room_id', useAuthCheck, (req, res, next) => {
     const { academyCode } = req.verified;
