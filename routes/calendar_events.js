@@ -7,7 +7,7 @@ router.get('/my/:class_num', useAuthCheck, (req, res, next) => {
     const { authId, userType } = req.verified;
     const { class_num } = req.params;
     const { currentDate } = req.query;
-    const sql = `SELECT * FROM ${userType === 'students' ? 'student_calendar_events' : 'teacher_shared_events'} 
+    const sql = `SELECT * FROM ${userType === 'students' ? 'student_calendar_events' : 'teacher_calendar_events'} 
                 WHERE (LAST_DAY(starts - INTERVAL 2 MONTH) + INTERVAL 1 DAY <= '${currentDate}' AND '${currentDate}' < LAST_DAY(ends + INTERVAL 1 MONTH))
                 AND ${userType === 'students' ? 'student_id' : 'teacher_id'}='${authId}' AND class_number=${class_num}`;
 
@@ -25,7 +25,7 @@ router.get('/class-shared/:class_num', useAuthCheck, (req, res, next) => {
     const { authId, userType } = req.verified;
     const { class_num } = req.params;
     const { currentDate } = req.query;
-    const sql = `SELECT * FROM teacher_shared_events
+    const sql = `SELECT * FROM teacher_calendar_events
                 WHERE (LAST_DAY(starts - INTERVAL 2 MONTH) + INTERVAL 1 DAY <= '${currentDate}' AND '${currentDate}' < LAST_DAY(ends + INTERVAL 1 MONTH))
                 AND class_number=${class_num} AND shared=1`;
 
@@ -39,18 +39,18 @@ router.get('/class-shared/:class_num', useAuthCheck, (req, res, next) => {
 });
 
 // 현재 날짜 리스트 가져오기
-router.get('/my/:class_num/current', (req, res, next) => {
+router.get('/my/:class_num/current', useAuthCheck, (req, res, next) => {
     const { authId, userType } = req.verified;
     const { class_num } = req.params;
     const sql = `SELECT * FROM student_calendar_events
-                WHERE (all_day=0 AND start <= CURRENT_TIMESTAMP AND CURRENT_TIMESTAMP < ends) OR 
+                WHERE (all_day=0 AND starts <= CURRENT_TIMESTAMP AND CURRENT_TIMESTAMP < ends) OR 
                 (all_day=1 AND (LAST_DAY(starts - INTERVAL 1 MONTH) + INTERVAL 1 DAY <= CURRENT_TIMESTAMP AND CURRENT_TIMESTAMP < LAST_DAY(ends)))
                 AND student_id='${authId}' AND class_number=${class_num}`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
-            if (error) res.status(400).json(errpr);
+            if (error) res.status(400).json(error);
             else res.json(results);
         });
     });
@@ -115,7 +115,7 @@ router.post('/teachers/my', useAuthCheck, (req, res, next) => {
         classNumber,
         shared,
     } = req.body;
-    const sql = `INSERT INTO student_calendar_events (cal_id, title, description, starts, ends, types, all_day, days_of_week, editable, 
+    const sql = `INSERT INTO teacher_calendar_events (cal_id, title, description, starts, ends, types, all_day, days_of_week, editable, 
                 start_editable, duration_editable, resource_editable, color_sets, completed, teacher_id, class_number, shared)
                 VALUES ('${calId}', '${title}', '${description}', '${starts}', '${ends}', ${types || 0}, ${allDay || 0}, ${
         daysOfWeek ? `'${daysOfWeek}'` : null
