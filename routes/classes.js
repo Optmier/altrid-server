@@ -2,6 +2,21 @@ var express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
+/** 클래스 번호로 클래스 이름 조회 */
+router.get('/infos/:class_number', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+    const classNum = req.params.class_number;
+    console.log(classNum, academyCode);
+    const sql = `SELECT * FROM classes WHERE idx=${classNum} AND academy_code='${academyCode}'`;
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results[0]);
+        });
+    });
+});
+
 /** 학원 코드로 클래스 목록 조회 */
 router.get('/:code', useAuthCheck, (req, res, next) => {
     const academyCode = req.params.code === 'current' ? req.verified.academyCode : req.params.code;
