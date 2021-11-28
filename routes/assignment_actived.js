@@ -10,7 +10,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
     const academy_code = req.verified.academyCode;
     const teacher_id = req.verified.authId;
 
-    const { class_number, assignment_number, due_date, title, description, time_limit, eyetrack, file_url } = req.body;
+    const { class_number, assignment_number, due_date, title, description, subject, time_limit, eyetrack, file_url } = req.body;
     let { contents_data } = req.body;
     contents_data = `'${contents_data.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}'`;
 
@@ -22,6 +22,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
                     academy_code,
                     title,
                     description,
+                    subject,
                     time_limit,
                     eyetrack,
                     contents_data,
@@ -34,6 +35,7 @@ router.post('/', useAuthCheck, (req, res, next) => {
                         '${academy_code}',
                         '${title.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
                         '${description.replace(/\\/gi, '\\\\').replace(/\'/gi, "\\'")}',
+                        ${subject},
                         ${time_limit},
                         ${eyetrack},
                         ${contents_data},
@@ -58,7 +60,7 @@ router.get('/:class/:id', useAuthCheck, (req, res, next) => {
     // 클래스 번호 같은 경우는 추후 다른 인원과의 고의적인 충돌을 방지하기 위해 매커니즘을 변경할 필요 있음!
     const activeClassNumber = req.params.class;
 
-    let sql = `SELECT idx, title, description, time_limit, eyetrack, contents_data, due_date, created, updated FROM assignment_actived WHERE idx=${activeId} AND class_number=${activeClassNumber} AND academy_code='${academyCode}'`;
+    let sql = `SELECT idx, title, description, subject, time_limit, eyetrack, contents_data, due_date, created, updated FROM assignment_actived WHERE idx=${activeId} AND class_number=${activeClassNumber} AND academy_code='${academyCode}'`;
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
@@ -75,7 +77,7 @@ router.get('/:class', useAuthCheck, (req, res, next) => {
     const authId = req.verified.authId;
     const userType = req.verified.userType;
 
-    let sql = `SELECT actived.idx, actived.title, actived.assignment_number, actived.description, actived.time_limit, actived.eyetrack, actived.contents_data, actived.due_date, actived.created, 
+    let sql = `SELECT actived.idx, actived.title, actived.assignment_number, actived.description, actived.subject, actived.time_limit, actived.eyetrack, actived.contents_data, actived.due_date, actived.created, 
     ${userType === 'students' ? 'result.is_submitted,' : ''}
                 (SELECT COUNT(*) FROM assignment_result AS result
                 INNER JOIN students_in_class AS in_class
