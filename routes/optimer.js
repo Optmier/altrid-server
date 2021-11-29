@@ -40,7 +40,7 @@ router.patch('/', useAuthCheck, (req, res, next) => {
 // 특정 클래스 내 학생 순위 조회
 router.get('/:classNum', useAuthCheck, (req, res, next) => {
     const classNum = req.params.classNum;
-    const sql = `SELECT students.name, optimer.* FROM optimer
+    const sql = `SELECT DISTINCT students.name, optimer.* FROM optimer
                 LEFT JOIN students_in_class ON optimer.student_id=students_in_class.student_id
                 JOIN students ON optimer.student_id=students.auth_id
                 WHERE optimer.class_number=${classNum} AND 

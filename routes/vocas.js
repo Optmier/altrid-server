@@ -33,7 +33,7 @@ router.patch('/', useAuthCheck, (req, res, next) => {
     const studentId = req.verified.authId;
     const { idx, means, dist, counts, completed, classNum } = req.body;
     const sql = `UPDATE vocas SET means=${
-        means === null ? `'${means}'` : null
+        means !== null ? `'${means}'` : null
     }, dist=${dist}, counts=${counts}, completed=${completed} WHERE student_id='${studentId}' AND idx=${idx} AND class_number=${classNum}`;
 
     dbctrl((connection) => {
@@ -77,8 +77,8 @@ router.get('/completed', useAuthCheck, (req, res, next) => {
     // const pagination = 10;
     const studentId = req.verified.authId;
     const { limit, page, classNum } = req.query;
-    const sql = `SELECT vocas.*, assignment_draft.title AS assignment_title FROM vocas 
-                LEFT JOIN assignment_draft ON assignment_draft.idx=vocas.assignment_id
+    const sql = `SELECT vocas.*, assignment_actived.title AS assignment_title FROM vocas 
+                LEFT JOIN assignment_actived ON assignment_actived.idx=vocas.assignment_id
                 WHERE vocas.student_id='${studentId}' AND vocas.dist=2 AND vocas.class_number=${classNum} ORDER BY vocas.idx LIMIT ${
         limit ? limit : 0
     } OFFSET ${page ? page * limit : 0}`;
