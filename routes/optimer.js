@@ -59,7 +59,7 @@ router.get('/:classNum', useAuthCheck, (req, res, next) => {
 // 특정 학생 학습시간 데이터 조회
 router.get('/:classNum/:studentId', useAuthCheck, (req, res, next) => {
     const classNum = req.params.classNum;
-    const studentId = req.params.studentId;
+    const studentId = req.verified.authId;
     const sql = `SELECT students.name, optimer.* FROM optimer
     JOIN students_in_class ON optimer.student_id=students_in_class.student_id
     JOIN students ON optimer.student_id=students.auth_id

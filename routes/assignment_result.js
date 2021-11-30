@@ -2,6 +2,27 @@ var express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
 var router = express.Router();
 
+// 가장 최근 과제의 id 값 가져오기
+router.get('/last-my-actived/:class_number', useAuthCheck, (req, res, next) => {
+    const studentId = req.verified.authId;
+    const class_number = req.params.class;
+
+    let sql = `SELECT assignment_result.actived_number, assignment_result.student_id FROM assignment_result 
+    JOIN assignment_actived
+    ON assignment_actived.idx = assignment_result.actived_number
+    WHERE assignment_actived.class_number = ${req.params.class_number} AND assignment_result.student_id = '${studentId}'
+    ORDER BY assignment_result.idx
+    DESC LIMIT 1 OFFSET 0`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results[0]);
+        });
+    });
+});
+
 /** 수강생 관리를 위한 데이터 가져오기*/
 router.get('/report-students/:class_number', useAuthCheck, (req, res, next) => {
     if (req.verified.userType !== 'teachers' && req.verified.userType !== 'admins')
