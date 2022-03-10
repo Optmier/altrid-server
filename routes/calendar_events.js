@@ -43,9 +43,34 @@ router.get('/my/:class_num/current', useAuthCheck, (req, res, next) => {
     const { authId, userType } = req.verified;
     const { class_num } = req.params;
     const sql = `SELECT * FROM student_calendar_events
-                WHERE (all_day=0 AND starts <= CURRENT_TIMESTAMP AND CURRENT_TIMESTAMP < ends) OR 
-                (all_day=1 AND (LAST_DAY(starts - INTERVAL 1 MONTH) + INTERVAL 1 DAY <= CURRENT_TIMESTAMP AND CURRENT_TIMESTAMP < LAST_DAY(ends)))
-                AND student_id='${authId}' AND class_number=${class_num}`;
+                WHERE
+                    (
+                        student_calendar_events.days_of_week IS NULL AND(
+                            student_calendar_events.starts <= CURRENT_TIMESTAMP AND CURRENT_TIMESTAMP < student_calendar_events.ends
+                        )
+                    ) AND student_id = '${authId}' AND class_number = ${class_num}`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
+// 현재 날짜 리스트 3개만 가져오기
+router.get('/my/:class_num/current/last-three', useAuthCheck, (req, res, next) => {
+    const { authId, userType } = req.verified;
+    const { class_num } = req.params;
+    const sql = `SELECT * FROM student_calendar_events
+                WHERE
+                    (
+                        student_calendar_events.days_of_week IS NULL AND(
+                            student_calendar_events.starts <= CURRENT_TIMESTAMP AND CURRENT_TIMESTAMP < student_calendar_events.ends
+                        )
+                    ) AND student_id = '${authId}' AND class_number = ${class_num}
+                    ORDER BY student_calendar_events.starts LIMIT 3 OFFSET 0`;
 
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {

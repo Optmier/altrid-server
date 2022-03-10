@@ -345,7 +345,9 @@ router.get('/teacher-feedback/:assignmentNum/:studentId', useAuthCheck, (req, re
     dbctrl((connection) => {
         connection.query(sql, (error, results, fields) => {
             connection.release();
+            // console.log(results);
             if (error) res.status(400).json(error);
+            else if (!results || !results.length) res.json(null);
             else res.json(results[0].teacher_feedback);
         });
     });

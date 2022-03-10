@@ -53,6 +53,27 @@ router.post('/', useAuthCheck, (req, res, next) => {
     });
 });
 
+/** 클래스 내 최근 3개 데이터 조회 */
+router.get('/:class/last-three', useAuthCheck, (req, res, next) => {
+    const academyCode = req.verified.academyCode;
+    const classNumber = req.params.class;
+    const authId = req.verified.authId;
+    const userType = req.verified.userType;
+
+    const sql = `SELECT title, description, due_date 
+    FROM assignment_actived
+    WHERE class_number=${classNumber} AND academy_code='${academyCode}' AND timestamp(due_date) > NOW()
+    ORDER BY due_date DESC LIMIT 3 OFFSET 0`;
+
+    dbctrl((connection) => {
+        connection.query(sql, (error, results, fields) => {
+            connection.release();
+            if (error) res.status(400).json(error);
+            else res.json(results);
+        });
+    });
+});
+
 /** 과제 수행을 위한 데이터 조회 */
 router.get('/:class/:id', useAuthCheck, (req, res, next) => {
     const academyCode = req.verified.academyCode;
