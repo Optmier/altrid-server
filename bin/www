@@ -2,40 +2,38 @@
 /**
  * Module dependencies.
  */
-var app = require('../app');
-var path = require('path');
-var debug = require('debug')('eduityonline-node:server');
-var fs = require('fs');
-const certsPassword = require('../configs/encryptionKey').certsPassword;
-const whitelists = require('../configs/whitelists');
+const app = require('../app');
+const debug = require('debug')('eduityonline-node:server');
+const fs = require('fs');
 let http, https, options, server;
 const io = app.io;
-if (process.env.RUN_MODE === 'dev') {
+
+if (!SECURE) {
     http = require('http');
 } else {
     https = require('https');
     options = {
-        pfx: fs.readFileSync(path.join(__dirname.replace('bin', 'certs'), 'apis.altridedge.com.pfx')),
-        passphrase: certsPassword,
+        pfx: fs.readFileSync(SECURE_FILE_PATH),
+        passphrase: SECURE_PASSWORD,
     };
 }
 // const vhost = require("vhost");
 /**
  * Get port from environment and store in Express.
  */
-var port = normalizePort(process.env.PORT || (process.env.RUN_MODE === 'dev' ? '8080' : '8020'));
+const port = normalizePort(APP_PORT);
 app.set('port', port);
 /**
  * Create HTTP or HTTPS server.
  */
-if (process.env.RUN_MODE === 'dev') {
+if (!SECURE) {
     server = http.createServer(app);
 } else {
     server = https.createServer(options, app);
 }
 io.attach(server, {
     cors: {
-        origin: whitelists,
+        origin: CLIENT_HOST,
         withCredentials: true,
     },
 });

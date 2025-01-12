@@ -1,5 +1,59 @@
-const { RUN_MODE } = require('./configs/modes');
-process.env.RUN_MODE = RUN_MODE;
+global.__path = __dirname + '/';
+
+APP_PORT = 9000;
+SECURE = false;
+SECURE_FILE_PATH = '';
+SECURE_PASSWORD = '';
+CLIENT_HOST = 'https://lms.altridedge.com';
+TOSS_PAYMENTS_SECRET = '';
+AUTO_PAYMENT_CONFIG = {
+    CHECK_COUNTS: 5,
+    UPDATE_INTERVAL: 3,
+};
+GOOROOMEE_AUTH_TOKEN = '';
+MAIL_EMAIL = '';
+MAIL_PASSWORD = '';
+DB_CONFIG = {
+    HOST: '',
+    PORT: 3306,
+    USER: '',
+    PASSWORD: '',
+    DATABASE: '',
+    CONNECTION_LIMIT: 1,
+    MULTIPLE_STATEMENTS: true,
+};
+ENCRYPTION_SECRET = {
+    TOKEN_USER_DATA: '',
+    JWT_SECRET: '',
+    TEST_UID_SECRET: '',
+};
+ENCRYTION_SALT = {
+    SECONDARY_PASSWORD: '',
+    SECONDARY_SALT: '',
+};
+
+const fs = require('fs');
+
+// config injection
+let configPath = '';
+
+if (fs.existsSync(__path + 'configs/config.json')) {
+    let config_data = null;
+    const data = fs.readFileSync(__path + 'configs/config.json', 'utf8');
+
+    if (data !== '') {
+        config_data = JSON.parse(data);
+    }
+
+    if (config_data) {
+        configPath = __path + 'configs/config.json';
+        for (const attr in config_data) {
+            if ((config_data[attr] || typeof config_data[attr] === 'boolean') && config_data[attr] !== 'undefined') {
+                global[attr] = config_data[attr];
+            }
+        }
+    }
+}
 
 var createError = require('http-errors');
 var express = require('express');
@@ -7,6 +61,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const indexRouter = require('./routes/index');
+
 /** ALTR!D */
 const __files = require('./routes/_files');
 const userStudents = require('./routes/students');
@@ -31,7 +86,6 @@ const payments = require('./routes/payments');
 const handsUp = require('./routes/hands-up');
 const optimer = require('./routes/optimer');
 const vocas = require('./routes/vocas');
-const secret = require('./configs/encryptionKey').certsPassword;
 
 const camStudy = require('./routes/cam_study');
 const personalSettings = require('./routes/personal_settings');
@@ -40,8 +94,6 @@ const calendarEvents = require('./routes/calendar_events');
 var app = express();
 var cors = require('cors');
 
-const whitelists = require('./configs/whitelists');
-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -49,12 +101,12 @@ app.set('view engine', 'ejs');
 app.use(logger('dev'));
 app.use(express.json({ limit: '128mb' }));
 app.use(express.urlencoded({ extended: false, limit: '128mb' }));
-app.use(cookieParser(secret));
+app.use(cookieParser(global.SECURE_PASSWORD));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(
     cors({
-        origin: whitelists,
+        origin: CLIENT_HOST,
         credentials: true,
     }),
 );

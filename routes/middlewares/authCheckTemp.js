@@ -1,11 +1,10 @@
-const whitelists = require('../../configs/whitelists');
 const { verifyToken } = require('../../modules/encryption');
 
 const useAuthCheckTemp = (req, res, next) => {
     const token = req.signedCookies.tmp;
     const tokenVerified = verifyToken(token);
     const origin = req.headers.origin;
-    const originCheck = origin === 'true' ? true : whitelists.includes(origin);
+    const originCheck = origin === 'true' ? true : global.CLIENT_HOST === origin;
 
     if (!token)
         return res.status(401).json({
@@ -13,7 +12,7 @@ const useAuthCheckTemp = (req, res, next) => {
             message: 'unauthenticated :: not logged in.',
         });
 
-    if (!tokenVerified.error && (process.env.RUN_MODE === 'dev' || originCheck)) {
+    if (!tokenVerified.error && (!global.SECURE || originCheck)) {
         req.verified = tokenVerified;
         next();
     } else {

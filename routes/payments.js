@@ -4,10 +4,8 @@ const useAuthCheck = require('./middlewares/authCheck');
 const axios = require('axios').default;
 const dateformat = require('../modules/dateformat');
 Date.prototype.format = dateformat;
-const paymentsSecretKey = require('../configs/encryptionKey')[
-    process.env.RUN_MODE === 'dev' ? 'tossPaymentsTestSecretKey' : 'tossPaymentsSecretKey'
-];
-const tossPaymentsApiUrl = 'https://api.tosspayments.com';
+const paymentsSecretKey = global.TOSS_PAYMENTS_SECRET;
+const tossPaymentsApiUrl = global.TOSS_PAYMENTS_API_HOST;
 /** https://github.com/jeanlescure/short-unique-id
  * Copyright (c) 2018-2020 Short Unique ID Contributors.
  * Licensed under the Apache License 2.0.
@@ -802,7 +800,7 @@ WHERE no='${orderId}'`;
                         // console.log(res);
 
                         // 30분 마다 체크
-                        if (updateCounts >= (process.env.RUN_MODE === 'dev' ? 5 : 180)) {
+                        if (updateCounts >= global.AUTO_PAYMENT_CONFIG.CHECK_COUNTS) {
                             console.log('updating metas interval...');
                             console.log(this.todayLists);
                             this.getTodayLists((res) => {
@@ -970,7 +968,7 @@ WHERE no='${orderId}'`;
                         // 날짜 갱신
                         this.currentDate = updatedDate;
                         updateCounts++;
-                    }, 1000 * (process.env.RUN_MODE === 'dev' ? 3 : 10));
+                    }, 1000 * global.AUTO_PAYMENT_CONFIG.UPDATE_INTERVAL);
             },
             (err) => {
                 console.error(err);

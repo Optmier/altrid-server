@@ -1,8 +1,8 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const tokenEncKey = require('../configs/encryptionKey').tokenUserDataEncKey();
-const jwtSecret = require('../configs/encryptionKey').jwtSecretKey();
-const testUIDSecretKey = require('../configs/encryptionKey').testUIDSecretKey();
+const tokenEncKey = require('../modules/encryptionKey').tokenUserDataEncKey();
+const jwtSecret = require('../modules/encryptionKey').jwtSecretKey();
+const testUIDSecretKey = require('../modules/encryptionKey').testUIDSecretKey();
 const _buffer64 = Buffer.alloc(64);
 
 const encryptTokenUserData = (email) => {
