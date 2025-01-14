@@ -43,9 +43,9 @@ jobs:
           branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
           git remote update
           git fetch
-          git checkout origin develop
+          git checkout -t origin/develop
           git pull origin develop
-          git checkout $LATEST_RELEASE_BRANCH
+          git checkout -t origin/$LATEST_RELEASE_BRANCH
           git pull origin $LATEST_RELEASE_BRANCH
           git pull origin master
           npm run standard-version -- --release-as minor
