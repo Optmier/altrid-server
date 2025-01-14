@@ -58,7 +58,7 @@ jobs:
           git checkout -t origin/$LATEST_RELEASE_BRANCH
           echo "STEP 5: git pull origin $LATEST_RELEASE_BRANCH"
           git pull origin $LATEST_RELEASE_BRANCH
-          echo "STEP 6: git pull origin master --allow-unrelated-histories --no-ff"
+          echo "STEP 6: git merge origin/master --no-ff"
           git pull origin master --allow-unrelated-histories
           npx standard-version -- --release-as minor
           git flow release finish -Fpn $branch
