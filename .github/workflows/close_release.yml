@@ -1,0 +1,65 @@
+name: Close release branch
+
+env:
+  RELEASE_BRANCH_PREFIX: "release/"
+  TIMEZONE: "Asia/Seoul"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  close-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Fetch all remote branches
+        run: git fetch --prune --all
+
+      - name: Get lastest release branch
+        run: |
+          LATEST_BRANCH=$(git branch -r --sort=-committerdate | grep $RELEASE_BRANCH_PREFIX | head -n 1 | sed 's/origin\///' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          echo "LATEST_RELEASE_BRANCH=$LATEST_BRANCH" >> $GITHUB_ENV
+
+      - name: Current release branch
+        run: echo "$LATEST_RELEASE_BRANCH"
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set git user
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Install git-flow
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-flow
+          git flow init -d
+
+      - name: Finish release
+        run: |
+          git config pull.rebase false
+          branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
+          git remote update
+          echo "STEP 1: git fetch"
+          git fetch
+          echo "STEP 2: git checkout develop"
+          git checkout develop
+          echo "STEP 3: git pull origin develop"
+          git pull origin develop
+          echo "STEP 4: git checkout -t origin/$LATEST_RELEASE_BRANCH"
+          git checkout -t origin/$LATEST_RELEASE_BRANCH
+          echo "STEP 5: git pull origin $LATEST_RELEASE_BRANCH"
+          git pull origin $LATEST_RELEASE_BRANCH
+          echo "STEP 6: git pull origin master --allow-unrelated-histories"
+          git pull origin master --allow-unrelated-histories
+          npx standard-version -- --release-as minor
+          git flow release finish -Fpn $branch
+          git push --tags
