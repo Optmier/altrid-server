@@ -49,10 +49,6 @@ jobs:
           branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
           echo "STEP 1: git fetch"
           git fetch
-          echo "STEP 2: git checkout develop"
-          git checkout develop
-          echo "STEP 3: git pull origin develop"
-          git pull origin develop
           echo "STEP 4: git checkout -t origin/$LATEST_RELEASE_BRANCH"
           git checkout -t origin/$LATEST_RELEASE_BRANCH
           git pull origin master --no-ff --allow-unrelated-histories
