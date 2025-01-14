@@ -53,5 +53,5 @@ jobs:
           git pull origin $LATEST_RELEASE_BRANCH
           git pull origin master
           npx standard-version -- --release-as minor
-          git flow init
+          git flow init -d
           git flow release finish -Fpn $branch
