@@ -41,6 +41,7 @@ jobs:
       - name: Finish release
         run: |
           branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
+          git remote update
           git fetch
           git checkout origin develop
           git pull origin develop
