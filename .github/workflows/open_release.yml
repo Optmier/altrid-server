@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  RELEASE_BRANCH_PREFIX: "release-test"
+  RELEASE_BRANCH_PREFIX: "release"
   TIMEZONE: "Asia/Seoul"
   SLACK_WORKFLOW_WEBHOOK_URL: "https://hooks.slack.com/triggers/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"
   GET_SEQUENCE_NUMBER_URL: "https://educore-release-list.run.goorm.app/sequence"
