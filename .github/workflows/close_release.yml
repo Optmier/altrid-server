@@ -3,6 +3,7 @@ name: Close release branch
 env:
   RELEASE_BRANCH_PREFIX: "release/"
   TIMEZONE: "Asia/Seoul"
+  GET_SEQUENCE_NUMBER_URL: "https://educore-release-list.run.goorm.app/sequence"
 
 on:
   workflow_dispatch:
@@ -45,9 +46,7 @@ jobs:
 
       - name: Finish release
         run: |
-          git config pull.ff only
           branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
-          git remote update
           echo "STEP 1: git fetch"
           git fetch
           echo "STEP 2: git checkout develop"
@@ -56,10 +55,11 @@ jobs:
           git pull origin develop
           echo "STEP 4: git checkout -t origin/$LATEST_RELEASE_BRANCH"
           git checkout -t origin/$LATEST_RELEASE_BRANCH
-          echo "STEP 5: git pull origin $LATEST_RELEASE_BRANCH"
-          git pull origin $LATEST_RELEASE_BRANCH
-          echo "STEP 6: git merge origin/master --no-ff"
-          git pull origin master --allow-unrelated-histories
           npx standard-version -- --release-as minor
           git flow release finish -Fpn $branch
           git push --tags
+
+      - name: Increase release sequence number
+        run: |
+          RESPONSE=$(curl -X PATCH -H 'Content-type: application/json' "$GET_SEQUENCE_NUMBER_URL")
+          echo "Today's next release sequence is $RESPONSE"
