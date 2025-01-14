@@ -55,8 +55,8 @@ jobs:
           git pull origin develop
           echo "STEP 4: git checkout -t origin/$LATEST_RELEASE_BRANCH"
           git checkout -t origin/$LATEST_RELEASE_BRANCH
-          git pull origin master --no-ff
-          npx standard-version -- --release-as minor
+          git pull origin master --no-ff --allow-unrelated-histories
+          npx standard-version -- --release-as minor 
           git flow release finish -Fpn $branch
           git push --tags
 
