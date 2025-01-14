@@ -16,7 +16,7 @@ jobs:
       - name: Get release sequence number
         run: |
           RESPONSE=$(curl -X GET -H 'Content-type: application/json' "$GET_SEQUENCE_NUMBER_URL")
-          echo "SEQUENCE_NUMBER=$RESPONSE >> $GITHUB_ENV"
+          echo "SEQUENCE_NUMBER=$RESPONSE" >> $GITHUB_ENV
         
       - name: Make release branch postfix
         run: |
