@@ -1,0 +1,21 @@
+name: Close release branch
+
+env:
+  RELEASE_BRANCH_PREFIX: "release-test"
+  TIMEZONE: "Asia/Seoul"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  close-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get lastest release branch
+        run: git branch -r --sort=-committerdate | grep '$RELEASE_BRANCH_PREFIX/' | head -n 1
+
+      - name: Current release branch
+        run: echo ""
