@@ -19,8 +19,33 @@ jobs:
 
       - name: Get lastest release branch
         run: |
-          LATEST_BRANCH=$(git branch -r --sort=-committerdate | grep $RELEASE_BRANCH_PREFIX | head -n 1)
+          LATEST_BRANCH=$(git branch -r --sort=-committerdate | grep $RELEASE_BRANCH_PREFIX | head -n 1 | sed 's/origin\///')
           echo "LATEST_RELEASE_BRANCH=$LATEST_BRANCH" >> $GITHUB_ENV
 
       - name: Current release branch
         run: echo "$LATEST_RELEASE_BRANCH"
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install standard-version
+        run: npm install standard-version
+
+      - name: Install git-flow
+        run: |
+          apt-get update
+          apt-get install -y git-flow
+
+      - name: Finish release
+        run: |
+          branch=$($LATEST_RELEASE_BRANCH | cut -d'/' -f2)
+          git fetch
+          git checkout origin develop
+          git pull origin develop
+          git checkout $LATEST_RELEASE_BRANCH
+          git pull origin $LATEST_RELEASE_BRANCH
+          git pull origin master
+          npm run standard-version -- --release-as minor
+          git flow release finish -Fpn $branch
