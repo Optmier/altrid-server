@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: develop
 
       - name: Fetch all remote branches
         run: git fetch --prune --all
@@ -39,6 +41,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y git-flow
+          git flow init
 
       - name: Finish release
         run: |
