@@ -45,6 +45,7 @@ jobs:
 
       - name: Finish release
         run: |
+          git config pull.rebase false
           branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
           git remote update
           echo "STEP 1: git fetch"
