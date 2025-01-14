@@ -37,11 +37,11 @@ jobs:
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-      - name: Install git-flow
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git-flow
-          git flow init -d
+      # - name: Install git-flow
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y git-flow
+      #     git flow init -d
 
       - name: Finish release
         run: |
@@ -61,4 +61,8 @@ jobs:
           echo "STEP 7: git pull origin master"
           git pull origin master
           npx standard-version -- --release-as minor
-          git flow release finish -Fpn $branch --allow-unrelated-histories
+          git checkout master
+          git merge $LATEST_RELEASE_BRANCH
+          git checkout develop
+          git merge $LATEST_RELEASE_BRANCH
+          git branch -D $LATEST_RELEASE_BRANCH
