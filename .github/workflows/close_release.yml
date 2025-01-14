@@ -43,7 +43,7 @@ jobs:
           branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
           git remote update
           git fetch
-          git checkout -t origin/develop
+          git checkout develop
           git pull origin develop
           git checkout -t origin/$LATEST_RELEASE_BRANCH
           git pull origin $LATEST_RELEASE_BRANCH
