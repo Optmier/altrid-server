@@ -15,7 +15,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Get lastest release branch
-        run: git branch -r --sort=-committerdate | grep '$RELEASE_BRANCH_PREFIX/' | head -n 1
+        run: |
+          COMMAND=$(git branch -r --sort=-committerdate | grep '$RELEASE_BRANCH_PREFIX/' | head -n 1)
+          echo "LATEST_RELEASE_BRANCH=$COMMAND" >> $GITHUB_ENV
 
       - name: Current release branch
-        run: echo ""
+        run: echo "$LATEST_RELEASE_BRANCH"
