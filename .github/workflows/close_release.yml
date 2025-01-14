@@ -35,8 +35,8 @@ jobs:
 
       - name: Install git-flow
         run: |
-          apt-get update
-          apt-get install -y git-flow
+          sudo apt-get update
+          sudo apt-get install -y git-flow
 
       - name: Finish release
         run: |
