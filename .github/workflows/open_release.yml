@@ -31,7 +31,7 @@ jobs:
       - name: Set git user
         run: |
           git config user.name "${{ github.actor }}"
-          git config user.email chyh1900@gmail.com
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
 
       - name: Push release branch
         run: git push -u origin release/$RELEASE_BRANCH_POSTFIX
