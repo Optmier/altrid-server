@@ -15,7 +15,7 @@ jobs:
         id: get_latest_release_branch
         run: |
           # Get the latest release branch
-          LATEST_BRANCH=$(git branch -r --sort=-committerdate | grep 'origin/release/' | head -n 1 | sed 's/origin\///')
+          LATEST_BRANCH=$(git branch -r --sort=-committerdate | grep 'origin/release-test/' | head -n 1 | sed 's/origin\///')
           
           # Save the result to GitHub Actions environment variable
           echo "LATEST_RELEASE_BRANCH=$LATEST_BRANCH" >> $GITHUB_ENV
