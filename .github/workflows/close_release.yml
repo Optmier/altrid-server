@@ -16,7 +16,7 @@ jobs:
 
       - name: Get lastest release branch
         run: |
-          COMMAND=$(git branch -r --sort=-committerdate | grep $RELEASE_BRANCH_PREFIX | head -n 1)
+          COMMAND=$(git branch -r --sort=-committerdate | grep 'release-test/' | head -n 1)
           echo "LATEST_RELEASE_BRANCH=$COMMAND" >> $GITHUB_ENV
 
       - name: Current release branch
