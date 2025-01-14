@@ -40,7 +40,7 @@ jobs:
 
       - name: Finish release
         run: |
-          branch=$($LATEST_RELEASE_BRANCH | cut -d'/' -f2)
+          branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
           git fetch
           git checkout origin develop
           git pull origin develop
