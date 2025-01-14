@@ -41,6 +41,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y git-flow
+          git flow init -d
 
       - name: Finish release
         run: |
@@ -60,5 +61,4 @@ jobs:
           echo "STEP 7: git pull origin master"
           git pull origin master
           npx standard-version -- --release-as minor
-          git flow init -d
           git flow release finish -Fpn $branch
