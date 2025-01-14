@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
 
 env:
+  RELEASE_BRANCH_PREFIX: "release-test"
   TIMEZONE: "Asia/Seoul"
   SLACK_WORKFLOW_WEBHOOK_URL: "https://hooks.slack.com/triggers/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"
 
@@ -11,14 +12,14 @@ jobs:
   open-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Set release branch postfix
+      - name: Make release branch postfix
         run: |
           KST_DATE=$(TZ=$TIMEZONE date '+%Y%m%d')
           SEQUENCE_NUMBER=$((GITHUB_RUN_NUMBER))
           echo "RELEASE_BRANCH_POSTFIX=edu-${KST_DATE}-${SEQUENCE_NUMBER}" >> $GITHUB_ENV
 
       - name: Current release branch
-        run: echo "Release branch is release/$RELEASE_BRANCH_POSTFIX"
+        run: echo "Release branch is $RELEASE_BRANCH_PREFIX/$RELEASE_BRANCH_POSTFIX"
         
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,7 +27,7 @@ jobs:
           ref: develop
 
       - name: Create branch
-        run: git checkout -b release/$RELEASE_BRANCH_POSTFIX develop
+        run: git checkout -b $RELEASE_BRANCH_PREFIX/$RELEASE_BRANCH_POSTFIX develop
 
       - name: Set git user
         run: |
@@ -34,9 +35,9 @@ jobs:
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
       - name: Push release branch
-        run: git push -u origin release/$RELEASE_BRANCH_POSTFIX
+        run: git push -u origin $RELEASE_BRANCH_PREFIX/$RELEASE_BRANCH_POSTFIX
 
       - name: Run slack workflow
         run: |
-          POST_DATA='{"releaseBranch": "release/'"$RELEASE_BRANCH_POSTFIX"'"}'
+          POST_DATA='{"releaseBranch": "'"$RELEASE_BRANCH_PREFIX"'/'"$RELEASE_BRANCH_POSTFIX"'"}'
           curl -X POST -H 'Content-type: application/json' --data "${POST_DATA}" "$SLACK_WORKFLOW_WEBHOOK_URL"
