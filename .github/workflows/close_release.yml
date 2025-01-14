@@ -64,5 +64,5 @@ jobs:
           git checkout master
           git merge $LATEST_RELEASE_BRANCH
           git checkout develop
-          git merge $LATEST_RELEASE_BRANCH
+          git merge $LATEST_RELEASE_BRANCH --allow-unrelated-histories
           git branch -D $LATEST_RELEASE_BRANCH
