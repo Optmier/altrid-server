@@ -48,5 +48,5 @@ jobs:
           git checkout -t origin/$LATEST_RELEASE_BRANCH
           git pull origin $LATEST_RELEASE_BRANCH
           git pull origin master
-          npm run standard-version -- --release-as minor
+          npx standard-version -- --release-as minor
           git flow release finish -Fpn $branch
