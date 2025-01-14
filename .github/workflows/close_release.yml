@@ -1,7 +1,7 @@
 name: Close release branch
 
 env:
-  RELEASE_BRANCH_PREFIX: "release-test/"
+  RELEASE_BRANCH_PREFIX: "release/"
   TIMEZONE: "Asia/Seoul"
 
 on:
