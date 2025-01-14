@@ -46,23 +46,19 @@ jobs:
       - name: Finish release
         run: |
           branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
-          echo "STEP 1: git remote update"
           git remote update
-          echo "STEP 2: git fetch"
+          echo "STEP 1: git fetch"
           git fetch
-          echo "STEP 3: git checkout develop"
+          echo "STEP 2: git checkout develop"
           git checkout develop
-          echo "STEP 4: git pull origin develop"
+          echo "STEP 3: git pull origin develop"
           git pull origin develop
-          echo "STEP 5: git checkout -t origin/$LATEST_RELEASE_BRANCH"
+          echo "STEP 4: git checkout -t origin/$LATEST_RELEASE_BRANCH"
           git checkout -t origin/$LATEST_RELEASE_BRANCH
-          echo "STEP 6: git pull origin $LATEST_RELEASE_BRANCH"
+          echo "STEP 5: git pull origin $LATEST_RELEASE_BRANCH"
           git pull origin $LATEST_RELEASE_BRANCH
-          echo "STEP 7: git pull origin master"
+          echo "STEP 6: git pull origin master"
           git pull origin master
           npx standard-version -- --release-as minor
-          git checkout master
-          git merge $LATEST_RELEASE_BRANCH
-          git checkout develop
-          git merge $LATEST_RELEASE_BRANCH --allow-unrelated-histories
-          git branch -D $LATEST_RELEASE_BRANCH
+          git flow release finish -Fpn $branch
+          git push --tags
