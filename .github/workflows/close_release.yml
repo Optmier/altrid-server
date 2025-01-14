@@ -11,6 +11,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Fetch all remote branches
+        run: git fetch --prune --all
+
       - name: Get the latest release branch
         id: get_latest_release_branch
         run: |
