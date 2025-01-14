@@ -1,27 +1,26 @@
-name: Get Latest Release Branch
+name: Close release branch
+
+env:
+  RELEASE_BRANCH_PREFIX: "release-test/"
+  TIMEZONE: "Asia/Seoul"
 
 on:
   workflow_dispatch:
 
 jobs:
-  get_latest_release_branch:
+  close-release:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Fetch all remote branches
         run: git fetch --prune --all
 
-      - name: Get the latest release branch
-        id: get_latest_release_branch
+      - name: Get lastest release branch
         run: |
-          # Get the latest release branch
-          LATEST_BRANCH=$(git branch -r --sort=-committerdate | grep 'origin/release-test/' | head -n 1 | sed 's/origin\///')
-          
-          # Save the result to GitHub Actions environment variable
+          LATEST_BRANCH=$(git branch -r --sort=-committerdate | grep $RELEASE_BRANCH_PREFIX | head -n 1)
           echo "LATEST_RELEASE_BRANCH=$LATEST_BRANCH" >> $GITHUB_ENV
 
-      - name: Display the latest release branch
-        run: echo "The latest release branch is $LATEST_RELEASE_BRANCH"
+      - name: Current release branch
+        run: echo "$LATEST_RELEASE_BRANCH"
