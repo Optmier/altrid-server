@@ -3,6 +3,7 @@ name: 릴리즈 브랜치 닫기
 env:
   TIMEZONE: "Asia/Seoul"
   GET_BRANCH_NAME_URL: "https://educore-release-list.run.goorm.app/branch-name"
+  PATCH_SEQUENCE_NUMBER_URL: "https://educore-release-list.run.goorm.app/sequence"
 
 on:
   workflow_dispatch:
@@ -66,5 +67,5 @@ jobs:
 
       - name: Increase release sequence number
         run: |
-          RESPONSE=$(curl -X PATCH -H 'Content-type: application/json' -H 'eduReleaseGithubActionToken: tmpToken' "$GET_SEQUENCE_NUMBER_URL")
+          RESPONSE=$(curl -X PATCH -H 'Content-type: application/json' -H 'eduReleaseGithubActionToken: tmpToken' "$PATCH_SEQUENCE_NUMBER_URL")
           echo "Today's next release sequence is $RESPONSE"
