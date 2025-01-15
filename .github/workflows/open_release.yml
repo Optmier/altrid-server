@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Get release sequence number
         run: |
-          RESPONSE=$(curl -X GET -H 'Content-type: application/json' "$GET_SEQUENCE_NUMBER_URL")
+          RESPONSE=$(curl -X GET -H 'Content-type: application/json' -H 'eduReleaseGithubActionToken: tmpToken' "$GET_SEQUENCE_NUMBER_URL")
           echo "SEQUENCE_NUMBER=$RESPONSE" >> $GITHUB_ENV
         
       - name: Make release branch postfix
@@ -30,7 +30,7 @@ jobs:
       - name: Store current release branch name
         run: |
           PUT_DATA='{"newBranchName": "'"$RELEASE_BRANCH_PREFIX"'/'"$RELEASE_BRANCH_POSTFIX"'""}'
-          curl -X PUT -H 'Content-type: application/json' --data "${PUT_DATA}" "$PUT_BRANCH_NAME_URL"
+          curl -X PUT -H 'Content-type: application/json' -H 'eduReleaseGithubActionToken: tmpToken' --data "${PUT_DATA}" "$PUT_BRANCH_NAME_URL"
         
       - name: Checkout code
         uses: actions/checkout@v4
