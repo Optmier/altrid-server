@@ -1,4 +1,4 @@
-name: Open release branch
+name: 릴리즈 브랜치 열기
 
 on:
   workflow_dispatch:
@@ -8,6 +8,7 @@ env:
   TIMEZONE: "Asia/Seoul"
   SLACK_WORKFLOW_WEBHOOK_URL: "https://hooks.slack.com/triggers/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"
   GET_SEQUENCE_NUMBER_URL: "https://educore-release-list.run.goorm.app/sequence"
+  PUT_BRANCH_NAME_URL: "https://educore-release-list.run.goorm.app/branch-name"
 
 jobs:
   open-release:
@@ -25,6 +26,11 @@ jobs:
 
       - name: Current release branch
         run: echo "Release branch is $RELEASE_BRANCH_PREFIX/$RELEASE_BRANCH_POSTFIX"
+
+      - name: Store current release branch name
+        run: |
+          PUT_DATA='{"newBranchName": "'"$RELEASE_BRANCH_PREFIX"'/'"$RELEASE_BRANCH_POSTFIX"'""}'
+          curl -X PUT -H 'Content-type: application/json' --data "${PUT_DATA}" "$PUT_BRANCH_NAME_URL"
         
       - name: Checkout code
         uses: actions/checkout@v4
