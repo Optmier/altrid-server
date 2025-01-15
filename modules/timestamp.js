@@ -6,3 +6,4 @@ module.exports = () => {
     console.log(_timestamp);
     return _timestamp.toString();
 };
+// 주석 추가

@@ -1,9 +1,8 @@
-name: Close release branch
-#test
+name: 릴리즈 브랜치 닫기
+
 env:
-  RELEASE_BRANCH_PREFIX: "release/"
   TIMEZONE: "Asia/Seoul"
-  GET_SEQUENCE_NUMBER_URL: "https://educore-release-list.run.goorm.app/sequence"
+  GET_BRANCH_NAME_URL: "https://educore-release-list.run.goorm.app/branch-name"
 
 on:
   workflow_dispatch:
@@ -18,15 +17,20 @@ jobs:
           ref: develop
 
       - name: Fetch all remote branches
-        run: git fetch --prune --all
-
-      - name: Get lastest release branch
         run: |
-          LATEST_BRANCH=$(git branch -r --sort=-committerdate | grep $RELEASE_BRANCH_PREFIX | head -n 1 | sed 's/origin\///' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-          echo "LATEST_RELEASE_BRANCH=$LATEST_BRANCH" >> $GITHUB_ENV
+          git fetch --unshallow --tags --all
+          git checkout master
+
+      - name: Get current opened release branch name
+        run: |
+          RESPONSE=$(curl -X GET -H 'Content-type: application/json' -H 'eduReleaseGithubActionToken: tmpToken' "$GET_BRANCH_NAME_URL")
+          echo "CURRENT_RELEASE_BRANCH=$RESPONSE" >> $GITHUB_ENV
 
       - name: Current release branch
-        run: echo "$LATEST_RELEASE_BRANCH"
+        run: echo "Current release branch is $CURRENT_RELEASE_BRANCH"
+
+      - name: Checkout to release branch
+        run: git checkout -t origin/$CURRENT_RELEASE_BRANCH
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
@@ -37,6 +41,7 @@ jobs:
         run: |
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git config pull.rebase false
 
       - name: Install git-flow
         run: |
@@ -46,20 +51,20 @@ jobs:
 
       - name: Finish release
         run: |
-          branch=$(echo $LATEST_RELEASE_BRANCH | cut -d'/' -f2)
-          echo "STEP 1: git fetch"
+          branch=$(echo $CURRENT_RELEASE_BRANCH | cut -d'/' -f2)
           git fetch
-          echo "STEP 2: git checkout develop"
-          git checkout develop
-          echo "STEP 3: git pull origin develop"
-          git pull origin develop
-          echo "STEP 4: git checkout -t origin/$LATEST_RELEASE_BRANCH"
-          git checkout -t origin/$LATEST_RELEASE_BRANCH
+          echo "STEP 1: 릴리즈 브랜치 최신화"
+          git pull origin $CURRENT_RELEASE_BRANCH
+          echo "STEP 2: Merging master to release branch..."
+          git pull origin master
+          echo "STEP 3: 버전 업 및 체인지 로그 생성"
           npx standard-version -- --release-as minor
+          echo "STEP 4: 릴리즈 브랜치 닫기"
           git flow release finish -Fpn $branch
+          echo "STEP 5: 새로운 태그 푸시"
           git push --tags
 
       - name: Increase release sequence number
         run: |
-          RESPONSE=$(curl -X PATCH -H 'Content-type: application/json' "$GET_SEQUENCE_NUMBER_URL")
+          RESPONSE=$(curl -X PATCH -H 'Content-type: application/json' -H 'eduReleaseGithubActionToken: tmpToken' "$GET_SEQUENCE_NUMBER_URL")
           echo "Today's next release sequence is $RESPONSE"
