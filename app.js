@@ -131,4 +131,5 @@ app.use(function (err, req, res, next) {
     res.render('error');
 });
 // 핫픽스 1
+// 핫픽스 2
 module.exports = app;
