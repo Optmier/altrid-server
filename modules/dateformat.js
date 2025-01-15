@@ -34,7 +34,7 @@ const dateformat = function (f) {
         }
     });
 };
-
+// 기능 추가 주석
 String.prototype.string = function (len) {
     var s = '',
         i = 0;
