@@ -1,3 +1,4 @@
+// 다음 릴리즈 반영 사항
 module.exports = (name, verifUrl) => {
     return `
     <div style="font-family: 'Montserrat', 'Noto Sans KR'; padding: 48px;">
