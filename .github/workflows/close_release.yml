@@ -23,7 +23,7 @@ jobs:
 
       - name: Get current opened release branch name
         run: |
-          RESPONSE=$(curl -X GET -H 'Content-type: application/json' "$GET_BRANCH_NAME_URL")
+          RESPONSE=$(curl -X GET -H 'Content-type: application/json' -H 'eduReleaseGithubActionToken: tmpToken' "$GET_BRANCH_NAME_URL")
           echo "CURRENT_RELEASE_BRANCH=$RESPONSE" >> $GITHUB_ENV
 
       - name: Current release branch
@@ -66,5 +66,5 @@ jobs:
 
       - name: Increase release sequence number
         run: |
-          RESPONSE=$(curl -X PATCH -H 'Content-type: application/json' "$GET_SEQUENCE_NUMBER_URL")
+          RESPONSE=$(curl -X PATCH -H 'Content-type: application/json' -H 'eduReleaseGithubActionToken: tmpToken' "$GET_SEQUENCE_NUMBER_URL")
           echo "Today's next release sequence is $RESPONSE"
