@@ -74,4 +74,4 @@ jobs:
             - 이 PR 을 Close 처리 후 릴리즈 브랜치를 삭제해 주세요.
             - 그리고 작업 사항 반영 후 릴리즈를 다시 오픈해 주세요.
 
-            이 PR 은 [Github Action #${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/run/${{ github.run_id }}) 에서 생성됨.
+            이 PR 은 [Github Action #${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) 에서 생성됨.
