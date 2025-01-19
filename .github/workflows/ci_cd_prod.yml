@@ -18,6 +18,11 @@ jobs:
         run: |
           git fetch --depth=250 origin master develop
 
+      - name: Set git user
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
       - name: Get package version
         uses: bbonkr/get-version-action@v1.3.1
         id: get_package_version
