@@ -5,7 +5,7 @@
  * @param {*} value 값
  */
 const setCookie = (res, key, value) => {
-    res.cookie(key, value, { httpOnly: true, secure: process.env.RUN_MODE === 'dev' ? false : true, signed: true });
+    res.cookie(key, value, { httpOnly: true, secure: global.SECURE, signed: true });
 };
 /**
  *
@@ -13,7 +13,7 @@ const setCookie = (res, key, value) => {
  * @param {*} key 키 이름
  */
 const deleteCookie = (res, key) => {
-    res.clearCookie(key, { httpOnly: true, secure: process.env.RUN_MODE === 'dev' ? false : true, signed: true });
+    res.clearCookie(key, { httpOnly: true, secure: global.SECURE, signed: true });
 };
 
 module.exports = { setCookie, deleteCookie };

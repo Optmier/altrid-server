@@ -11,14 +11,20 @@ const express = require('express');
 const router = express.Router();
 const mysql = require('mysql');
 const crypts = require('../modules/encryption');
-const dbconfig = require('../configs/dbconfig');
 const { verifyToken } = require('../modules/encryption');
 const socketIO = require('socket.io');
 router.io = socketIO();
 const io_vidLecture = router.io.of('/vid_lecture');
 const io_camStudy = router.io.of('cam_study');
-
-const dbPool = mysql.createPool(dbconfig);
+const dbPool = mysql.createPool({
+    host: global.DB_CONFIG.HOST,
+    port: global.DB_CONFIG.PORT,
+    user: global.DB_CONFIG.USER,
+    password: global.DB_CONFIG.PASSWORD,
+    database: global.DB_CONFIG.DATABASE,
+    connectionLimit: global.DB_CONFIG.CONNECTION_LIMIT,
+    multipleStatements: global.DB_CONFIG.MULTIPLE_STATEMENTS,
+});
 global.dbctrl = (callback) => {
     dbPool.getConnection((err, conn) => {
         if (!err) {

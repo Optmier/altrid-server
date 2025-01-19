@@ -5,8 +5,11 @@ const express = require('express');
 const useAuthCheck = require('./middlewares/authCheck');
 const router = express.Router();
 const { default: Axios } = require('axios');
-const apiServer = 'https://bizapi.gooroomee.com/api/v1';
-const GOOROOMEE_HEADERS = require('../configs/modes').GOOROOMEE_HEADERS;
+const apiServer = global.GOOROOMEE_BIZ_API_HOST;
+const GOOROOMEE_HEADERS = {
+    'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+    'X-GRM-AuthToken': global.GOOROOMEE_AUTH_TOKEN,
+};
 const dateformat = require('../modules/dateformat');
 Date.prototype.format = dateformat;
 
