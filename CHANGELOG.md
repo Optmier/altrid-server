@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/Optmier/altrid-server/compare/v1.8.0...v1.9.0) (2025-01-19)
+
+
+### Features
+
+* 브랜치 삭제 단계 삭제 ([f996fb2](https://github.com/Optmier/altrid-server/commit/f996fb23c7c206dd9bfb145d4199b8145d29c4ab))
+
+
+### Bug Fixes
+
+* 릴리즈 오픈 시 이전 태그랑 비교 못하는 문제 수정 ([9be87b2](https://github.com/Optmier/altrid-server/commit/9be87b208cff92005d8ef6205144f61302f39fa2))
+
 ## [1.8.0](https://github.com/Optmier/altrid-server/compare/v1.7.0...v1.8.0) (2025-01-19)
 
 
