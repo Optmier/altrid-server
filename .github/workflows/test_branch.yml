@@ -1,0 +1,18 @@
+name: Get Head Ref on Push
+
+on:
+  push:
+    branches:
+      - workflow-test
+
+jobs:
+  get_head_ref:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up GitHub CLI
+        uses: actions/checkout@v3
+
+      - name: Get the PR associated with the commit
+        run: |
+          PR=$(gh pr list --base master --state closed --json number,headRef --jq '.[] | select(.headRef != null) | .headRef' | tail -1)
+          echo "PR Head Ref: $PR"
