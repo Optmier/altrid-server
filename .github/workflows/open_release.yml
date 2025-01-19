@@ -58,7 +58,7 @@ jobs:
         uses: thomaseizinger/create-pull-request@master
         with:
           github_token: ${{ secrets.CREATE_PR_ACTION_TOKEN }}
-          head: $BRANCH_PREFIX/v$PACKAGE_VERSION
+          head: ${{ github.ref }}
           base: master
           assignees: ${{ github.actor }}
           title: "Release(v$PACKAGE_VERSION): $KST_DATE"
