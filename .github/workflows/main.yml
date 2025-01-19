@@ -1,0 +1,49 @@
+name: 릴리즈 오픈
+
+on:
+  workflow_dispatch:
+
+env:
+  BRANCH_PREFIX: "release"
+
+jobs:
+  open-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code to develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Set git user
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Versioning and creating changelog
+        run: npx standard-version -- --release-as minor
+
+      - name: Get package version
+        uses: bbonkr/get-version-action@v1.3.1
+        id: get_package_version
+        with:
+          project: "./package.json"
+
+      - name: Set package version to env.
+        run: echo "PACKAGE_VERSION=${{ steps.get_package_version.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Create release branch
+        run: git checkout -b $BRANCH_PREFIX/v$PACKAGE_VERSION
+
+      - name: Current git branches and package version
+        run: |
+          git branch
+          echo "Package version is $PACKAGE_VERSION"
+
+      - name: Push release branch
+        run: git push -u origin $BRANCH_PREFIX/v$PACKAGE_VERSION
