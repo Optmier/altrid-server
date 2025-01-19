@@ -5,6 +5,7 @@ on:
 
 env:
   BRANCH_PREFIX: "release"
+  TIMEZONE: "Asia/Seoul"
 
 jobs:
   open-release:
@@ -47,3 +48,25 @@ jobs:
 
       - name: Push release branch
         run: git push -u origin $BRANCH_PREFIX/v$PACKAGE_VERSION
+
+      - name: Get current datetime
+        run: |
+          KST_DATE=$(TZ=$TIMEZONE date '+%Y-%m-%d')
+          echo "KST_DATE=$KST_DATE" >> $GITHUB_ENV
+
+      - name: Create release PR
+        uses: thomaseizinger/create-pull-request@master
+        with:
+          github_token: ${{ secrets.CREATE_PR_ACTION_TOKEN }}
+          head: $BRANCH_PREFIX/v$PACKAGE_VERSION
+          base: master
+          assignees: ${{ github.actor }}
+          title: "Release(v$PACKAGE_VERSION): $KST_DATE"
+          body: |
+            "## 릴리즈 PR"
+            "- 반드시 작업 내역을 검토해 주세요."
+            "- 이상 없다면 Approve 후 Merge 해주세요."
+            "### 작업 내역 추가 또는 문제가 있는 경우"
+            "- 릴리즈 브랜치에 직접 작업하지 말아주세요."
+            "- 이 PR 을 Close 처리 후 릴리즈 브랜치를 삭제해 주세요."
+            "- 그리고 작업 사항 반영 후 릴리즈를 다시 오픈해 주세요."
