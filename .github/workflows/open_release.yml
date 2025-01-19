@@ -1,0 +1,77 @@
+name: 릴리즈 오픈
+
+on:
+  workflow_dispatch:
+
+env:
+  BRANCH_PREFIX: "release"
+  TIMEZONE: "Asia/Seoul"
+
+jobs:
+  open-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code to develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Fetch some commits
+        run: git fetch --depth=250 origin develop
+
+      - name: Set git user
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Versioning and creating changelog
+        run: npx standard-version -- --release-as minor
+
+      - name: Get package version
+        uses: bbonkr/get-version-action@v1.3.1
+        id: get_package_version
+        with:
+          project: "./package.json"
+
+      - name: Set package version to env.
+        run: echo "PACKAGE_VERSION=${{ steps.get_package_version.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Create release branch
+        run: git checkout -b $BRANCH_PREFIX/v$PACKAGE_VERSION
+
+      - name: Current git branches and package version
+        run: |
+          git branch
+          echo "Package version is $PACKAGE_VERSION"
+
+      - name: Push release branch
+        run: git push -u origin $BRANCH_PREFIX/v$PACKAGE_VERSION
+
+      - name: Get current datetime
+        run: |
+          KST_DATE=$(TZ=$TIMEZONE date '+%Y%m%d')
+          echo "KST_DATE=$KST_DATE" >> $GITHUB_ENV
+
+      - name: Create release PR
+        uses: thomaseizinger/create-pull-request@master
+        with:
+          github_token: ${{ secrets.CREATE_PR_ACTION_TOKEN }}
+          head: refs/heads/${{ env.BRANCH_PREFIX }}/v${{ env.PACKAGE_VERSION }}
+          base: master
+          assignees: ${{ github.actor }}
+          title: "Release(v${{ env.PACKAGE_VERSION }}): ${{ env.KST_DATE }}-${{ github.run_number }}"
+          body: |
+            ## 릴리즈 PR
+            - 반드시 작업 내역을 검토해 주세요.
+            - 이상 없다면 Approve 후 Merge 해주세요.
+            ### 작업 내역 추가 또는 문제가 있는 경우
+            - 릴리즈 브랜치에 직접 작업하지 말아주세요.
+            - 이 PR 을 Close 처리 후 릴리즈 브랜치를 삭제해 주세요.
+            - 그리고 작업 사항 반영 후 릴리즈를 다시 오픈해 주세요.
+
+            이 PR 은 [Github Action #${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) 에서 생성됨.
