@@ -42,15 +42,15 @@ jobs:
           git tag v$PACKAGE_VERSION
           git push --tags
 
-      - name: Delete reference branch from origin
-        run: git push origin --delete ${{ github.head_ref }}
-
       - name: Merge master to develop
         run: |
           git config pull.rebase false
           git checkout develop
           git pull origin master
           git push origin develop
+
+      - name: Delete reference branch from origin
+        run: git push origin --delete ${{ github.head_ref }}
 
   build-and-deploy:
     runs-on: ubuntu-latest
