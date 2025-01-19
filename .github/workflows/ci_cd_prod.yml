@@ -14,6 +14,9 @@ jobs:
         with:
           ref: master
 
+      # - name: Fetch some commits
+      #   run: git fetch --depth=250 origin master
+
       - name: Get package version
         uses: bbonkr/get-version-action@v1.3.1
         id: get_package_version
