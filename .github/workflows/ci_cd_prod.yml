@@ -42,6 +42,12 @@ jobs:
           git tag v$PACKAGE_VERSION
           git push --tags
 
+      - name: Delete reference branch from origin
+        run: |
+          REFERENCE_BRANCH="${{ github.event.pull_request.head.ref }}"
+          TRIMMED_BRANCH=$(echo $branch_name | sed 's/refs\/heads\///')
+          git push origin --delete $TRIMMED_BRANCH
+
       - name: Merge master to develop
         run: |
           git config pull.rebase false
@@ -49,9 +55,6 @@ jobs:
           git pull origin master
           git push origin develop
 
-      - name: Delete reference branch from origin
-        run: git push origin --delete ${{ github.event.pull_request.head.ref }}
-      
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:        
