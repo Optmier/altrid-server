@@ -58,15 +58,15 @@ jobs:
         uses: thomaseizinger/create-pull-request@master
         with:
           github_token: ${{ secrets.CREATE_PR_ACTION_TOKEN }}
-          head: ${{ github.ref }}
+          head: refs/heads/${{ env.BRANCH_PREFIX }}/v${{ env.PACKAGE_VERSION }
           base: master
           assignees: ${{ github.actor }}
-          title: "Release(v$PACKAGE_VERSION): $KST_DATE"
+          title: "Release(v${{ env.PACKAGE_VERSION }}): ${{ env.KST_DATE }}"
           body: |
-            "## 릴리즈 PR"
-            "- 반드시 작업 내역을 검토해 주세요."
-            "- 이상 없다면 Approve 후 Merge 해주세요."
-            "### 작업 내역 추가 또는 문제가 있는 경우"
-            "- 릴리즈 브랜치에 직접 작업하지 말아주세요."
-            "- 이 PR 을 Close 처리 후 릴리즈 브랜치를 삭제해 주세요."
-            "- 그리고 작업 사항 반영 후 릴리즈를 다시 오픈해 주세요."
+            ## 릴리즈 PR
+            - 반드시 작업 내역을 검토해 주세요.
+            - 이상 없다면 Approve 후 Merge 해주세요.
+            ### 작업 내역 추가 또는 문제가 있는 경우"
+            - 릴리즈 브랜치에 직접 작업하지 말아주세요."
+            - 이 PR 을 Close 처리 후 릴리즈 브랜치를 삭제해 주세요."
+            - 그리고 작업 사항 반영 후 릴리즈를 다시 오픈해 주세요."
