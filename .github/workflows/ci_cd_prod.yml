@@ -49,9 +49,6 @@ jobs:
           git pull origin master
           git push origin develop
 
-      - name: Delete reference branch from origin
-        run: git push origin --delete ${{ github.head_ref }}
-
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:        
