@@ -4,6 +4,7 @@
     "private": true,
     "scripts": {
         "start": "node ./bin/www",
+        "debug": "node --inspect=0.0.0.0:9229 ./bin/www",
         "standard-version": "standard-version",
         "release:finish": "branch=$(git rev-parse --abbrev-ref HEAD | cut -d'/' -f2); git pull origin release/${branch} && git fetch && git pull origin master && npm run standard-version -- --release-as minor && git flow release finish -Fpn ${branch} && git push --tags",
         "hotfix:finish": "branch=$(git rev-parse --abbrev-ref HEAD | cut -d'/' -f2); git pull origin hotfix/${branch} && git fetch && git pull origin master && npm run standard-version -- --release-as patch && git flow hotfix finish -Fpn ${branch} && git push --tags"

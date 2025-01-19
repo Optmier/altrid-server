@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  altridserver:
+    image: altrid-server
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./configs/config.json:/app/configs/config.json
+      - ./UploadedFiles:/app/UploadedFiles
+    ports:
+      - 9000:9000
+      - 9229:9229
+    command: ["node", "--inspect=0.0.0.0:9229", "./bin/www"]
