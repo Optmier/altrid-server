@@ -16,6 +16,9 @@ jobs:
         with:
           ref: develop
 
+      - name: Fetch some commits
+        run: git fetch --depth=250 origin develop
+
       - name: Set git user
         run: |
           git config user.name "${{ github.actor }}"
@@ -61,7 +64,7 @@ jobs:
           head: refs/heads/${{ env.BRANCH_PREFIX }}/v${{ env.PACKAGE_VERSION }}
           base: master
           assignees: ${{ github.actor }}
-          title: "Release(v${{ env.PACKAGE_VERSION }}): ${{ env.KST_DATE }}"
+          title: "Release(v${{ env.PACKAGE_VERSION }}): ${{ env.KST_DATE }} - ${{ github.run_id }}"
           body: |
             ## 릴리즈 PR
             - 반드시 작업 내역을 검토해 주세요.
