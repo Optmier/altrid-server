@@ -43,10 +43,7 @@ jobs:
           git push --tags
 
       - name: Delete reference branch from origin
-        run: |
-          REFERENCE_BRANCH="${{ github.event.pull_request.head.ref }}"
-          TRIMMED_BRANCH=$(echo $branch_name | sed 's/refs\/heads\///')
-          git push origin --delete $TRIMMED_BRANCH
+        run: git push origin --delete ${{ github.head_ref }}
 
       - name: Merge master to develop
         run: |
