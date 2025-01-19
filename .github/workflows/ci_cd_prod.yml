@@ -14,8 +14,10 @@ jobs:
         with:
           ref: master
 
-      # - name: Fetch some commits
-      #   run: git fetch --depth=250 origin master
+      - name: Fetch some commits
+        run: |
+          git fetch --depth=250 origin master develop
+          git config pull.rebase false
 
       - name: Get package version
         uses: bbonkr/get-version-action@v1.3.1
@@ -38,6 +40,12 @@ jobs:
 
       - name: Delete reference branch from origin
         run: git push origin --delete ${{ github.event.pull_request.head.ref }}
+
+      - name: Merge master to develop
+        run: |
+          git checkout develop
+          git pull origin master
+          git push origin develop
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
