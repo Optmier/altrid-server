@@ -14,9 +14,6 @@ jobs:
         with:
           ref: master
 
-      # - name: Fetch some commits
-      #   run: git fetch --depth=250 origin master
-
       - name: Get package version
         uses: bbonkr/get-version-action@v1.3.1
         id: get_package_version
@@ -35,6 +32,9 @@ jobs:
         run: |
           git tag v$PACKAGE_VERSION
           git push --tags
+
+      - name: Delete reference branch from origin
+        run: git push origin --delete ${{ github.event.pull_request.head.ref }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
