@@ -1,9 +1,9 @@
 name: CI/CD Prod Auto run
 
 on:
-  # push:
-  #   branches: [master]
-  workflow_dispatch:
+  push:
+    branches: [master]
+  # workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -26,7 +26,15 @@ jobs:
       - name: Current git branch and package version
         run: |
           git branch
-          echo "Package version=$PACKAGE_VERSION"
+          echo "Package version is $PACKAGE_VERSION"
+
+      - name: Create current version tag
+        run: |
+          git tag v$PACKAGE_VERSION
+          git push --tags
+
+      - name: Delete reference branch from origin
+        run: git push origin --delete ${{ github.event.pull_request.head.ref }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
