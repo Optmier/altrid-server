@@ -6,9 +6,9 @@ on:
   # workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  finish-branch:
     runs-on: ubuntu-latest
-    steps:        
+    steps:
       - name: Checkout to master branch
         uses: actions/checkout@v4
         with:
@@ -17,7 +17,6 @@ jobs:
       - name: Fetch some commits
         run: |
           git fetch --depth=250 origin master develop
-          git config pull.rebase false
 
       - name: Get package version
         uses: bbonkr/get-version-action@v1.3.1
@@ -38,14 +37,37 @@ jobs:
           git tag v$PACKAGE_VERSION
           git push --tags
 
-      - name: Delete reference branch from origin
-        run: git push origin --delete ${{ github.event.pull_request.head.ref }}
-
       - name: Merge master to develop
         run: |
+          git config pull.rebase false
           git checkout develop
           git pull origin master
           git push origin develop
+
+      - name: Delete reference branch from origin
+        run: git push origin --delete ${{ github.event.pull_request.head.ref }}
+      
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:        
+      - name: Checkout to master branch
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Get package version
+        uses: bbonkr/get-version-action@v1.3.1
+        id: get_package_version
+        with:
+          project: "./package.json"
+
+      - name: Set package version to env.
+        run: echo "PACKAGE_VERSION=${{ steps.get_package_version.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Current git branch and package version
+        run: |
+          git branch
+          echo "Package version is $PACKAGE_VERSION"
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -59,10 +81,10 @@ jobs:
       - name: Docker push to hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/altrid-lms-server --all-tags
 
-      - name: Deploy to remote server
-        uses: appleboy/ssh-action@master
+      # - name: Deploy to remote server
+      #   uses: appleboy/ssh-action@master
         # with:
-        #   host: ${{ secrets.REMOTE_SERVER_HOST }}
-        #   username: ${{ secrets.REMOTE_SERVER_USERNAME }}
+        #   host: secrets.REMOTE_SERVER_HOST
+        #   username: secrets.REMOTE_SERVER_USERNAME
         #   scripts: |
         #     pwd
