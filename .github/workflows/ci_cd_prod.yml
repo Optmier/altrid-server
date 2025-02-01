@@ -83,10 +83,13 @@ jobs:
       - name: Docker push to hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/altrid-lms-server --all-tags
 
-      # - name: Deploy to remote server
-      #   uses: appleboy/ssh-action@master
-        # with:
-        #   host: secrets.REMOTE_SERVER_HOST
-        #   username: secrets.REMOTE_SERVER_USERNAME
-        #   scripts: |
-        #     pwd
+      - name: Deploy to remote server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_SERVER_HOST }}
+          username: ${{ secrets.REMOTE_SERVER_USERNAME }}
+          password: ${{ secrets.REMOTE_SERVER_PASSWORD }}
+          script: |
+            cd ${{ secrets.REMOTE_SERVER_DIST }}
+            docker pull ${{ secrets.DOCKER_USERNAME }}/altrid-lms-server:latest
+            docker compose -f "docker-compose.yml" up -d
