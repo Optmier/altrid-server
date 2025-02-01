@@ -91,7 +91,7 @@ jobs:
           password: ${{ secrets.REMOTE_SERVER_PASSWORD }}
           scripts: |
             cd ${{ secrets.REMOTE_SERVER_DIST }}
-            docker compose -f "docker-compose.yml" down
-            docker rmi altrid-lms-server
+            # docker compose -f "docker-compose.yml" down
+            # docker rmi altrid-lms-server
             docker pull ${{ secrets.DOCKER_USERNAME }}/altrid-lms-server:latest
             docker compose -f "docker-compose.yml" up -d
