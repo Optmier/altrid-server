@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/Optmier/altrid-server/compare/v1.9.3...v1.10.0) (2025-02-01)
+
+
+### Features
+
+* **common:** 원격 서버 배포 단계 추가 ([#47](https://github.com/Optmier/altrid-server/issues/47)) ([bc01ac8](https://github.com/Optmier/altrid-server/commit/bc01ac8b2d47022b6f5f95f3bfc6c8eeed313c24))
+
 ### [1.9.3](https://github.com/Optmier/altrid-server/compare/v1.9.2...v1.9.3) (2025-01-22)
 
 ### [1.9.2](https://github.com/Optmier/altrid-server/compare/v1.9.1...v1.9.2) (2025-01-20)
