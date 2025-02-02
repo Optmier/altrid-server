@@ -1,8 +1,8 @@
 version: '3.4'
 
 services:
-  altridserver:
-    image: altrid-server
+  altrid-lms-server:
+    image: altrid-lms-server
     environment:
       NODE_ENV: development
     volumes:
