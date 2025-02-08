@@ -4,19 +4,9 @@
  */
 const app = require('../app');
 const debug = require('debug')('eduityonline-node:server');
-const fs = require('fs');
-let http, https, options, server;
+const http = require('http');
 const io = app.io;
 
-if (!SECURE) {
-    http = require('http');
-} else {
-    https = require('https');
-    options = {
-        pfx: fs.readFileSync(SECURE_FILE_PATH),
-        passphrase: SECURE_PASSWORD,
-    };
-}
 // const vhost = require("vhost");
 /**
  * Get port from environment and store in Express.
@@ -26,11 +16,9 @@ app.set('port', port);
 /**
  * Create HTTP or HTTPS server.
  */
-if (!SECURE) {
-    server = http.createServer(app);
-} else {
-    server = https.createServer(options, app);
-}
+
+const server = http.createServer(app);
+
 io.attach(server, {
     cors: {
         origin: CLIENT_HOST,
