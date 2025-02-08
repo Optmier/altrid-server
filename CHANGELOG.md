@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/Optmier/altrid-server/compare/v1.10.0...v1.11.0) (2025-02-08)
+
+
+### Features
+
+* createServer 시 https 를 앱 내부가 아닌 nginx secure 설정 방식을 따르도록 변경 ([#51](https://github.com/Optmier/altrid-server/issues/51)) ([4b46026](https://github.com/Optmier/altrid-server/commit/4b4602618ec07864b37d5fae1ed2d76c231b85e3))
+
 ## [1.10.0](https://github.com/Optmier/altrid-server/compare/v1.9.3...v1.10.0) (2025-02-01)
 
 
